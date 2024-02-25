@@ -1,5 +1,5 @@
-setwd("~/Documents/gui_trail/")
-dir = getwd()
+dir <- getwd()
+
 
 #all libraries needed
 library(mrMLM)
@@ -36,14 +36,12 @@ library(psych)
 library(plyr)
 
 genes_file <- "ricegenes.txt"
-snpsift <- as.character("/media/niran/Expansion/gwas_pipeline_June/snpsift/")
-data_dir <- paste0(dir,"/data/")
 
-source("scripts/data_summary.R")
-source("scripts/candidate_gene.R")
-source("scripts/hap_phe.R")
-source("scripts/func_piechart.R")
-source("scripts/qc_linux.R")
+source("data_summary.R")
+source("candidate_gene.R")
+source("hap_phe.R")
+source("func_piechart.R")
+source("qc_linux.R")
 
 
 theme_cus <-theme(panel.background = element_blank(),panel.border=element_rect(fill=NA),
@@ -70,6 +68,12 @@ mysummary <- function(x,na.rm=F){
   res
 }
 
+directory <- system.file("generated_files", package = "HaploGUI")
+
+# Create directory if it doesn't exist
+if (!dir.exists(directory)) {
+  dir.create(directory, recursive = TRUE)
+}
 
 ui = fluidPage(tagList(
   #shinythemes::themeSelector(),
@@ -544,7 +548,8 @@ server = function(input, output, session) {
     
     dd <- aa[,input$corr_traits]
     print(dd)
-    png(paste0(input$corr_location,input$corr_season,"_corr.png"), 
+    
+    png(file.path(dir,paste0(input$corr_location,input$corr_season,"_corr.png")), 
         width = 6, height = 6, units = "in", res = 300)
     
     pairs.panels(dd, smooth = TRUE, scale = FALSE,
@@ -558,7 +563,8 @@ server = function(input, output, session) {
     outfile <- tempfile(fileext = '.png')
     corr()
     # Return a list containing the filename
-    list(src = file.path(paste0(input$corr_location,input$corr_season,"_corr.png")),
+    list(src = file.path(dir,paste0(input$corr_location,input$corr_season,
+                                    "_corr.png")), 
          contentType = 'image/png',
          width = 400,
          height = 400,
@@ -571,7 +577,8 @@ server = function(input, output, session) {
     },
     
     content <- function(file) {
-      file.copy(paste0(input$corr_location,input$corr_season,"_corr.png"), file)
+      file.copy(file.path(dir,paste0(input$corr_location,input$corr_season,
+                                     "_corr.png")), file)
     },
     contentType = "image/png"
   )
@@ -806,7 +813,7 @@ server = function(input, output, session) {
     
     output$pca_plot <- renderImage({
       outfile <- tempfile(fileext = '.png')
-      list(src = file.path(dir,"pca_plot_2D.png"),
+      list(src = file.path(file.path(dir,"pca_plot_2D.png")),
            contentType = 'image/png',
            width = 400,
            height = 300,
@@ -823,9 +830,9 @@ server = function(input, output, session) {
     dir.create(file.path(dir,"results"))
     write.csv(phe() ,file.path(dir,"results",file = "pheno.csv"),row.names = F)
     #   
-    result <- mrMLM(fileGen = paste0(data_dir,"marker.csv"), 
-                    filePhe = file.path(dir,"results",file = "pheno.csv"),
-                    fileKin = NULL, filePS = paste0(data_dir,"/pca.csv"),
+    result <- mrMLM(fileGen = "marker.csv", 
+                    filePhe = file.path(dir, "results",file = "pheno.csv"),
+                    fileKin = NULL, filePS = "pca.csv",
                     PopStrType = "PCA",fileCov = NULL, Genformat = "Cha",
                     method=c("mrMLM","FASTmrMLM","FASTmrEMMA","ISIS EM-BLASSO","pLARmEB"),
                     trait = 1:1, SearchRadius = 50, CriLOD = 3,SelectVariable = 50,
@@ -888,8 +895,8 @@ server = function(input, output, session) {
       }
       
       candgene_ind <- out[,c(5,6)]
-      write_csv(candgene_ind, file = "POS.csv")
-      write.csv(out[,c(2:8)],file = "Identified_MTAs.csv",row.names = F) 
+      write_csv(candgene_ind, file.path(dir, "POS.csv"))
+      write.csv(out[,c(2:8)],file.path(dir,"Identified_MTAs.csv"),row.names = F) 
       
       output$result_table = renderTable({
         return(out)
@@ -916,7 +923,7 @@ server = function(input, output, session) {
       return(a)
     })
     
-    df <- candidate_gene("POS.csv",input$LD, genes_file)
+    df <- candidate_gene(file.path(dir,"POS.csv"),input$LD, genes_file)
     df2 = df[["gene_id"]]
     write.csv(df2,"locus.csv",row.names = F)
     
@@ -932,10 +939,10 @@ server = function(input, output, session) {
     if(file.exists(file.path(dir,"locus.csv"))){
       #reactive object supplied with a forigen function
       gene <- hap_phe(gene_infile = file.path(dir,"locus.csv"),
-                      pheno_file = input$hapfile$datapath,snp_fold = snpsift,
-                      select_cri = input$hl,dir = dir)
+                      pheno_file = input$hapfile$datapath,
+                      select_cri = input$hl,dir)
       func_piechart(gene_infile = file.path(dir,"locus.csv"),
-                    pheno_file = input$hapfile$datapath,dir = dir)
+                    pheno_file = input$hapfile$datapath,dir)
       removeModal()
     }
     
