@@ -6,14 +6,18 @@ qc_linux <- function(phefile, dir){
                          phe$Accessions)
   
   out1 <- phe[,c(1,1)]
-  write.table(out1, file = "id.txt", col.names = F, row.names = F,
+  write.table(out1, file.path(dir,"id.txt"), col.names = F, row.names = F,
               quote = F)
 
+  geno <- system.file("","server2", package = "HaploGUI")
+  plink <- system.file("","plink2", package = "HaploGUI")
+  tassel <- system.file("tassel-5-standalone","run_pipeline.pl", package = "HaploGUI")
   
-  system(command = paste0("plink2 --bfile server2 --keep id.txt --export vcf --out ",
+  system(command = paste0(plink," --bfile ",geno," --keep ",dir,
+                          "/id.txt --export vcf --out ",
                           dir,"/marker"))
 
-  system(command = paste0("tassel-5-standalone/run_pipeline.pl -fork1 -vcf ",
+  system(command = paste0(tassel," -fork1 -vcf ",
                           dir,"/marker.vcf -export ",dir,"/marker -exportType Hapmap"))
 
   mar <- read.delim2(file = file.path(dir,"marker.hmp.txt"),header = F)
@@ -42,9 +46,9 @@ qc_linux <- function(phefile, dir){
 
   # PCA ---------------------------------------------------------------------
 
-  system(command = paste0("plink2 --vcf ",dir,"/marker.vcf --freq --out ",dir,"/freq"))
+  system(command = paste0(plink," --vcf ",dir,"/marker.vcf --freq --out ",dir,"/freq"))
 
-  system(command = paste0("plink2 --vcf ",dir,"/marker.vcf --pca --read-freq ",
+  system(command = paste0(plink, " --vcf ",dir,"/marker.vcf --pca --read-freq ",
                           dir,"/freq.afreq --out ",dir,"/pca"))
 
   ##reading PCA data
