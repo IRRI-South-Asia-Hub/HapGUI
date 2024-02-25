@@ -13,6 +13,11 @@ qc_linux <- function(phefile, dir){
   plink <- system.file("","plink2", package = "HaploGUI")
   tassel <- system.file("tassel-5-standalone","run_pipeline.pl", package = "HaploGUI")
   
+  print("all the things:")
+  print(geno)
+  print(plink)
+  print(tassel)
+  
   system(command = paste0(plink," --bfile ",geno," --keep ",dir,
                           "/id.txt --export vcf --out ",
                           dir,"/marker"))
