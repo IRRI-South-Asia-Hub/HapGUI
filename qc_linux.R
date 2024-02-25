@@ -9,9 +9,9 @@ qc_linux <- function(phefile, dir){
   write.table(out1, file.path(dir,"id.txt"), col.names = F, row.names = F,
               quote = F)
 
-  geno <- system.file("","server2", package = "HaploGUI")
-  plink <- system.file("","plink2", package = "HaploGUI")
-  tassel <- system.file("tassel-5-standalone","run_pipeline.pl", package = "HaploGUI")
+  geno <- "server2"
+  plink <- "plink2"
+  tassel <- file.path("tassel-5-standalone","run_pipeline.pl")
   
   print("all the things:")
   print(geno)
