@@ -6,7 +6,7 @@ qc_linux <- function(phefile, dir){
                          phe$Accessions)
   
   out1 <- phe[,c(1,1)]
-  write.table(out1, file.path(dir,"id.txt"), col.names = F, row.names = F,
+  write.table(out1, "id.txt", col.names = F, row.names = F,
               quote = F)
 
   geno <- "server2"
@@ -18,12 +18,9 @@ qc_linux <- function(phefile, dir){
   print(plink)
   print(tassel)
   
-  system(command = paste0(plink," --bfile ",geno," --keep ",dir,
-                          "/id.txt --export vcf --out ",
-                          dir,"/marker"))
+  system(command = paste0(plink," --bfile ",geno," --keep id.txt --export vcf --out marker"))
 
-  system(command = paste0(tassel," -fork1 -vcf ",
-                          dir,"/marker.vcf -export ",dir,"/marker -exportType Hapmap"))
+  system(command = paste0(tassel," -fork1 -vcf marker.vcf -export marker -exportType Hapmap"))
 
   mar <- read.delim2(file = file.path(dir,"marker.hmp.txt"),header = F)
 
