@@ -174,7 +174,7 @@ ui = fluidPage(tagList(
                    
                    
                    tabPanel("ANOVA",
-                            h3("new anova"),
+                            h3("Augmented RCBD ANOVA"),
                             selectInput("anova_treatment","select treatment column",choices = NULL),
                             selectInput("anova_block","select block column",choices = NULL),
                             selectInput("anova_trait","select trait column",choices = NULL),
