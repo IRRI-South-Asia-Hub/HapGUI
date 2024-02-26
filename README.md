@@ -17,5 +17,5 @@ run the following code
 
 
 
-shiny::runGitHub(repo = "HaploGUI","IRRI-South-Asia-Hub",destdir = "D:/Shiny task and codes/Deply dir2")
+shiny::runGitHub(repo = "HaploGUI","IRRI-South-Asia-Hub",destdir = "D:/foldername/foldername2")
 
