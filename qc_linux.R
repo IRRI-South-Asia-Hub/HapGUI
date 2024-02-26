@@ -8,9 +8,9 @@ qc_linux <- function(phefile,genofile, dir){
 
   # PCA ---------------------------------------------------------------------
 
-  system(command = paste0(plink," --vcf ",dir,"/marker.vcf --freq --out ",dir,"/freq"))
+  system(command = paste0("plink2 --vcf ",dir,"/marker.vcf --freq --out ",dir,"/freq"))
 
-  system(command = paste0(plink, " --vcf ",dir,"/marker.vcf --pca --read-freq ",
+  system(command = paste0("plink2 --vcf ",dir,"/marker.vcf --pca --read-freq ",
                           dir,"/freq.afreq --out ",dir,"/pca"))
 
   ##reading PCA data
