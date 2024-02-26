@@ -221,6 +221,7 @@ ui = fluidPage(tagList(
              sidebarLayout(
                sidebarPanel(
                  fileInput("gwasfile","Phenotypic file input:"),
+                 fileInput("genofile","Genotypic file input:"),
                  actionButton("runa","Run GWAS")
                ),
                mainPanel(
@@ -809,7 +810,8 @@ server = function(input, output, session) {
       footer=tagList(h3("running..."))
     ))
     
-    qc_linux(input$gwasfile$datapath, dir)
+    qc_linux(input$gwasfile$datapath, input$genofile$datapath,
+             dir)
     
     output$pca_plot <- renderImage({
       outfile <- tempfile(fileext = '.png')

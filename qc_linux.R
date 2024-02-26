@@ -1,50 +1,10 @@
-qc_linux <- function(phefile, dir){
+qc_linux <- function(phefile,genofile, dir){
 
   phe <- read.csv(phefile, header = T)
   colnames(phe) <- c("Accessions","trait")
   phe$Accessions <- gsub(pattern = "IRIS ",replacement = "IRIS_",
                          phe$Accessions)
   
-  out1 <- phe[,c(1,1)]
-  write.table(out1, "id.txt", col.names = F, row.names = F,
-              quote = F)
-
-  geno <- "server2"
-  plink <- "plink2"
-  tassel <- "./run_pipeline.pl"
-  
-  print("all the things:")
-  print(geno)
-  print(plink)
-  print(tassel)
-  
-  system(command = paste0(plink," --bfile ",geno," --keep id.txt --export vcf --out marker"))
-
-  system(command = paste0(tassel," -fork1 -vcf marker.vcf -export marker -exportType Hapmap"))
-
-  mar <- read.delim2(file = file.path(dir,"marker.hmp.txt"),header = F)
-
-  mar <- mar[,-c(2,5:11)]
-
-  names <- mar[1,4:ncol(mar)] #Extracting IRIS id's from row one
-  #names <- as.data.frame(sub("IRIS_", "IRIS-", names, fixed = TRUE))
-  names2 <- data.frame(matrix(vector(), nrow = 1, ncol = ncol(names)))
-
-  for (i in c(1:ncol(names))) {
-    names2[1,i] <- unlist(strsplit(names[1,i],"_IRIS"))[1]
-    names2[1,i] <- sub("IRIS_","IRIS-",names2[1,i])
-  }
-
-  #data processing
-  col <- c("rs#","chrom","pos") #making new vector with these colnames
-
-  #replace dots with -
-
-  colnames(mar) <- c(col,names2) #combining the vector in the frame
-
-  mar <- mar[-c(1),]
-
-  write.csv(mar, file = file.path(dir,"marker.csv"),row.names = FALSE) #write processed data to CSV
 
   # PCA ---------------------------------------------------------------------
 
