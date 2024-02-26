@@ -11,7 +11,7 @@ install.packages(c("mrMLM", "dplyr", "CMplot", "bestNormalize", "tidyr", "plyr",
                    "haplotypes", "agricolae", "ggplot2", "ggpubr", "plotly", "readxl", 
                    "RColorBrewer", "crayon", "stringr", "berryFunctions", "imager", 
                    "yhat", "shiny", "shinythemes", "corrplot", "augmentedRCBD", "lme4", 
-                   "data.table", "ggfortify", "extrafont", "stats", "psych","BiocManager","rJava"))
+                   "data.table", "ggfortify", "extrafont", "stats", "psych","BiocManager","rJava","devtools"))
 ```
 run the following code
 
