@@ -17,6 +17,6 @@ run the following code
 
 
 
-
+```R
 shiny::runGitHub(repo = "HaploGUI","IRRI-South-Asia-Hub",destdir = "D:/foldername/foldername2")
-
+```
