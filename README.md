@@ -5,6 +5,7 @@ install following libraries
 
 
 
+```R
 
 install.packages(c("mrMLM", "dplyr", "CMplot", "bestNormalize", "tidyr", "plyr", "tidyverse", 
                    "haplotypes", "agricolae", "ggplot2", "ggpubr", "plotly", "readxl", 
