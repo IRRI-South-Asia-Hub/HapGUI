@@ -84,7 +84,7 @@ ui = fluidPage(tagList(
     tabPanel("Phenotype Analysis",fluid = T,
              
              sidebarLayout(
-               sidebarPanel(
+              sidebarPanel(
                  
                  fileInput("pheno","Upload phenotypic data",accept = ".csv"),
                  #Choosing genotype ID type
@@ -92,13 +92,14 @@ ui = fluidPage(tagList(
                               choices = c("Accession", "IRIS_ID","IRGC_NO")),
                  
                  selectInput("Acc","Choose genotype column",choices = NULL),
+                 selectInput("trait","Choose trait column(for histogram.bar and violin plot)",choices = NULL), #delete this one from histogram tab
                  actionButton("plt_bn","Generate plots"),
                ),
                
                mainPanel(
                  tabsetPanel(
                    tabPanel("histogram plot",
-                            selectInput("trait","Choose trait column",choices = NULL),
+                           # selectInput("trait","Choose trait column",choices = NULL),
                             tags$div(selectInput("hs_location", "Location", choices = NULL),
                                      style="display:inline-block"),
                             tags$div(selectInput("hs_season", "Season", choices = NULL),
@@ -437,12 +438,24 @@ server = function(input, output, session) {
   })
   
   violin_others <- reactive({
+    if(input$season != "null"){
     p2 <- ggplot(data_sub(), aes(x = data_sub()[[input$location]],y=phenotype, fill= data_sub()[[input$season]])) + 
       geom_violin()+ theme_cus +
       # scale_fill_discrete(name = input$other_cols)
-      ylab(input$trait) + geom_boxplot(width=0.1,position = position_dodge(0.9)) + scale_fill_discrete(name = input$season)+xlab(" ")
+      ylab(input$trait) + geom_boxplot(width=0.1,position = position_dodge(0.9)) + scale_fill_discrete(name = "Season")+xlab(" ")
     #scale_fill_manual("",values = sub_color() )+xlab(" ")
     return(p2)
+    }else{
+      
+      
+      p2 <- ggplot(data_sub(), aes(x = data_sub()[[input$location]],y=phenotype, fill= data_sub()[[input$location]])) + 
+        geom_violin()+ theme_cus +
+        # scale_fill_discrete(name = input$other_cols)
+        ylab(input$trait) + geom_boxplot(width=0.1,position = position_dodge(0.9)) + scale_fill_discrete(name = "Location")+xlab(" ")
+      #scale_fill_manual("",values = sub_color() )+xlab(" ")
+   return(p2)
+      
+       }
   })
   
   output$violin_pl = renderPlot({
@@ -490,19 +503,49 @@ server = function(input, output, session) {
   })
   
   bar_others = reactive({
-    df <- data_summary(data_sub(), varname="phenotype", 
-                       groupnames=c(input$bar_location,input$bar_season))
     
-    df <- rename(df, c("phenotype" = "mean"))
+    
+     
+    
+    
+    if(input$bar_season != "null"){
+      df <- data_summary(data_sub(), varname="phenotype", 
+                         groupnames=c(input$bar_location,input$bar_season))
+      
+      df <- rename(df, c("phenotype" = "mean"))
+      
     p3 <- ggplot(df, aes(x = df[[input$bar_location]],y=phenotype, fill=df[[input$bar_season]])) + 
       geom_bar(stat="identity", color="black", 
                position=position_dodge()) +
       geom_errorbar(aes(ymin=phenotype-sd, ymax=phenotype+sd), width=.2,
                     position=position_dodge(.9)) + theme_cus + ylab(input$trait)+
-      scale_fill_discrete(name = df[[input$bar_season]]) +xlab("")+
-      labs(fill = "Season", color="Season")
+      scale_fill_discrete(name = "Season") +xlab("") 
+      
+      
+      #labs(fill = input$bar_season, color= input$bar_season)
     #scale_fill_manual("",values = subpopulation_color() )
     return(p3)
+    
+    
+    }else{
+      
+      df <- data_summary(data_sub(), varname="phenotype", 
+                         groupnames=c(input$bar_location))
+      
+      df <- rename(df, c("phenotype" = "mean"))
+      
+      
+      p3 <- ggplot(df, aes(x = df[[input$bar_location]],y=phenotype, fill=df[[input$bar_location]])) + 
+        geom_bar(stat="identity", color="black", 
+                 position=position_dodge()) +
+        geom_errorbar(aes(ymin=phenotype-sd, ymax=phenotype+sd), width=.2,
+                      position=position_dodge(.9)) + theme_cus + ylab(input$trait)+
+        scale_fill_discrete(name = "Location") +xlab("")
+        
+        #labs(color= input$bar_location)
+      #scale_fill_manual("",values = subpopulation_color() )
+      return(p3) 
+    }
   })
   
   output$bar_pl = renderPlot({
