@@ -11,7 +11,7 @@ qc_linux <- function(phefile, dir){
 
   geno <- "server2"
   plink <- "plink2"
-  tassel <- file.path("tassel-5-standalone","run_pipeline.pl")
+  tassel <- "run_pipeline.pl"
   
   print("all the things:")
   print(geno)
