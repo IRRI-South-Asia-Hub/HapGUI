@@ -12,7 +12,7 @@ install.packages(c("mrMLM", "dplyr", "CMplot", "bestNormalize", "tidyr", "plyr",
                    "RColorBrewer", "crayon", "stringr", "berryFunctions", "imager", 
                    "yhat", "shiny", "shinythemes", "corrplot", "augmentedRCBD", "lme4", 
                    "data.table", "ggfortify", "extrafont", "stats", "psych","BiocManager","rJava"))
-```R
+```markdown
 run the following code
 
 
