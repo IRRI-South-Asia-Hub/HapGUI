@@ -171,23 +171,9 @@ ui = fluidPage(tagList(
                             downloadButton("break_summary_dw","download")
                    ),
                    
-                   tabPanel("ANOVA",
-                            h3("ANOVA TABLE"),
-                            verbatimTextOutput("anova"),
-                            h4("Conclusion"),
-                            verbatimTextOutput("con"),
-                            downloadButton("aov"),
-                            h3("ANOVA for augmented RCBD"),
-                            fileInput("nd","augmneted data",accept = ".csv"),
-                            actionButton("aug","Generate ANOVA for aug"),
-                            selectInput("block","Choose blocks column",choices = NULL),
-                            selectInput("id","Treatments",choices = NULL),
-                            selectInput("trait2","select trait",choices = NULL),
-                            verbatimTextOutput("aug_anova"),
-                            tableOutput("means")
-                   ),
                    
-                   tabPanel("ANOVA new",
+                   
+                   tabPanel("ANOVA",
                             h3("new anova"),
                             selectInput("anova_treatment","select treatment column",choices = NULL),
                             selectInput("anova_block","select block column",choices = NULL),
