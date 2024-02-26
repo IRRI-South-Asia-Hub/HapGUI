@@ -68,13 +68,6 @@ mysummary <- function(x,na.rm=F){
   res
 }
 
-directory <- system.file("generated_files", package = "HaploGUI")
-
-# Create directory if it doesn't exist
-if (!dir.exists(directory)) {
-  dir.create(directory, recursive = TRUE)
-}
-
 ui = fluidPage(tagList(
   #shinythemes::themeSelector(),
   navbarPage(
