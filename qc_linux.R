@@ -35,8 +35,7 @@ qc_linux <- function(phefile,genofile,genovcf, dir){
   m <- m[-c(1),]
   colnames(m)[1] <- "ID"
   
-  file_path <- system.file("","Edited all population.txt", package = "HaploGUI")
-  pop <- read.delim(file_path)
+  pop <- read.delim("Edited all population.txt")
   
   names(pop) <- c("IRIS.ID","Name","SUBPOPULATION","COUNTRY","IRGC.NO")
   comb_p <- merge(m, pop, by.x = "ID", by.y = "IRIS.ID", all.x = T)
