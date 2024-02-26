@@ -1,5 +1,5 @@
 # HaploGUI
-install following libraries
+install following libraries br()
 install.packages(c("mrMLM", "dplyr", "CMplot", "bestNormalize", "tidyr", "plyr", "tidyverse", 
                    "haplotypes", "agricolae", "ggplot2", "ggpubr", "plotly", "readxl", 
                    "RColorBrewer", "crayon", "stringr", "berryFunctions", "imager", 
