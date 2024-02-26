@@ -826,7 +826,7 @@ server = function(input, output, session) {
     dir.create(file.path(dir,"results"))
     write.csv(phe() ,file.path(dir,"results",file = "pheno.csv"),row.names = F)
     #   
-    result <- mrMLM(fileGen = "marker.csv", 
+    result <- mrMLM(fileGen = input$genofile$datapath, 
                     filePhe = file.path(dir, "results",file = "pheno.csv"),
                     fileKin = NULL, filePS = "pca.csv",
                     PopStrType = "PCA",fileCov = NULL, Genformat = "Cha",
