@@ -15,7 +15,9 @@ install.packages(c("mrMLM", "dplyr", "CMplot", "bestNormalize", "tidyr", "plyr",
 ```
 run the following code
 
-
+```R
+shiny::runGitHub(repo = "HaploGUI","IRRI-South-Asia-Hub")
+```
 
 ```R
 shiny::runGitHub(repo = "HaploGUI","IRRI-South-Asia-Hub",destdir = "D:/foldername/foldername2")
