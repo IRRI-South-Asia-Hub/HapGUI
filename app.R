@@ -1,3 +1,4 @@
+setwd("~/Documents/HaploGUI_part2/")
 dir <- getwd()
 
 
@@ -19,12 +20,10 @@ library(RColorBrewer)
 library(crayon)
 library(stringr)
 library(berryFunctions)
-library(ggplot2)
 library(imager)
 library(yhat)
 library(shiny)
 library(shinythemes)
-library(imager)
 library(corrplot)
 library(augmentedRCBD)
 library(lme4)
@@ -35,14 +34,14 @@ library(stats)
 library(psych)
 library(plyr)
 
+
 genes_file <- "ricegenes.txt"
 
 source("data_summary.R")
 source("candidate_gene.R")
 source("hap_phe.R")
 source("func_piechart.R")
-source("qc_linux.R")
-
+source("pca_plot.R")
 
 theme_cus <-theme(panel.background = element_blank(),panel.border=element_rect(fill=NA),
                   panel.grid.major = element_blank(),panel.grid.minor = element_blank(),
@@ -84,7 +83,7 @@ ui = fluidPage(tagList(
     tabPanel("Phenotype Analysis",fluid = T,
              
              sidebarLayout(
-              sidebarPanel(
+               sidebarPanel(
                  
                  fileInput("pheno","Upload phenotypic data",accept = ".csv"),
                  #Choosing genotype ID type
@@ -92,14 +91,13 @@ ui = fluidPage(tagList(
                               choices = c("Accession", "IRIS_ID","IRGC_NO")),
                  
                  selectInput("Acc","Choose genotype column",choices = NULL),
-                 selectInput("trait","Choose trait column(for histogram.bar and violin plot)",choices = NULL), #delete this one from histogram tab
                  actionButton("plt_bn","Generate plots"),
                ),
                
                mainPanel(
                  tabsetPanel(
                    tabPanel("histogram plot",
-                           # selectInput("trait","Choose trait column",choices = NULL),
+                            selectInput("trait","Choose trait column",choices = NULL),
                             tags$div(selectInput("hs_location", "Location", choices = NULL),
                                      style="display:inline-block"),
                             tags$div(selectInput("hs_season", "Season", choices = NULL),
@@ -171,10 +169,24 @@ ui = fluidPage(tagList(
                             downloadButton("break_summary_dw","download")
                    ),
                    
-                   
-                   
                    tabPanel("ANOVA",
-                            h3("Augmented RCBD ANOVA"),
+                            h3("ANOVA TABLE"),
+                            verbatimTextOutput("anova"),
+                            h4("Conclusion"),
+                            verbatimTextOutput("con"),
+                            downloadButton("aov"),
+                            h3("ANOVA for augmented RCBD"),
+                            fileInput("nd","augmneted data",accept = ".csv"),
+                            actionButton("aug","Generate ANOVA for aug"),
+                            selectInput("block","Choose blocks column",choices = NULL),
+                            selectInput("id","Treatments",choices = NULL),
+                            selectInput("trait2","select trait",choices = NULL),
+                            verbatimTextOutput("aug_anova"),
+                            tableOutput("means")
+                   ),
+                   
+                   tabPanel("ANOVA new",
+                            h3("new anova"),
                             selectInput("anova_treatment","select treatment column",choices = NULL),
                             selectInput("anova_block","select block column",choices = NULL),
                             selectInput("anova_trait","select trait column",choices = NULL),
@@ -202,7 +214,7 @@ ui = fluidPage(tagList(
                sidebarPanel(
                  fileInput("gwasfile","Phenotypic file input:"),
                  fileInput("genofile","Genotypic file input:"),
-                 fileInput("genovcf","VCF file input:"),
+                 fileInput("pcafile","PCA file input:"),
                  actionButton("runa","Run GWAS")
                ),
                mainPanel(
@@ -424,24 +436,12 @@ server = function(input, output, session) {
   })
   
   violin_others <- reactive({
-    if(input$season != "null"){
     p2 <- ggplot(data_sub(), aes(x = data_sub()[[input$location]],y=phenotype, fill= data_sub()[[input$season]])) + 
       geom_violin()+ theme_cus +
       # scale_fill_discrete(name = input$other_cols)
-      ylab(input$trait) + geom_boxplot(width=0.1,position = position_dodge(0.9)) + scale_fill_discrete(name = "Season")+xlab(" ")
+      ylab(input$trait) + geom_boxplot(width=0.1,position = position_dodge(0.9)) + scale_fill_discrete(name = input$season)+xlab(" ")
     #scale_fill_manual("",values = sub_color() )+xlab(" ")
     return(p2)
-    }else{
-      
-      
-      p2 <- ggplot(data_sub(), aes(x = data_sub()[[input$location]],y=phenotype, fill= data_sub()[[input$location]])) + 
-        geom_violin()+ theme_cus +
-        # scale_fill_discrete(name = input$other_cols)
-        ylab(input$trait) + geom_boxplot(width=0.1,position = position_dodge(0.9)) + scale_fill_discrete(name = "Location")+xlab(" ")
-      #scale_fill_manual("",values = sub_color() )+xlab(" ")
-   return(p2)
-      
-       }
   })
   
   output$violin_pl = renderPlot({
@@ -489,49 +489,19 @@ server = function(input, output, session) {
   })
   
   bar_others = reactive({
+    df <- data_summary(data_sub(), varname="phenotype", 
+                       groupnames=c(input$bar_location,input$bar_season))
     
-    
-     
-    
-    
-    if(input$bar_season != "null"){
-      df <- data_summary(data_sub(), varname="phenotype", 
-                         groupnames=c(input$bar_location,input$bar_season))
-      
-      df <- rename(df, c("phenotype" = "mean"))
-      
+    df <- rename(df, c("phenotype" = "mean"))
     p3 <- ggplot(df, aes(x = df[[input$bar_location]],y=phenotype, fill=df[[input$bar_season]])) + 
       geom_bar(stat="identity", color="black", 
                position=position_dodge()) +
       geom_errorbar(aes(ymin=phenotype-sd, ymax=phenotype+sd), width=.2,
                     position=position_dodge(.9)) + theme_cus + ylab(input$trait)+
-      scale_fill_discrete(name = "Season") +xlab("") 
-      
-      
-      #labs(fill = input$bar_season, color= input$bar_season)
+      scale_fill_discrete(name = df[[input$bar_season]]) +xlab("")+
+      labs(fill = "Season", color="Season")
     #scale_fill_manual("",values = subpopulation_color() )
     return(p3)
-    
-    
-    }else{
-      
-      df <- data_summary(data_sub(), varname="phenotype", 
-                         groupnames=c(input$bar_location))
-      
-      df <- rename(df, c("phenotype" = "mean"))
-      
-      
-      p3 <- ggplot(df, aes(x = df[[input$bar_location]],y=phenotype, fill=df[[input$bar_location]])) + 
-        geom_bar(stat="identity", color="black", 
-                 position=position_dodge()) +
-        geom_errorbar(aes(ymin=phenotype-sd, ymax=phenotype+sd), width=.2,
-                      position=position_dodge(.9)) + theme_cus + ylab(input$trait)+
-        scale_fill_discrete(name = "Location") +xlab("")
-        
-        #labs(color= input$bar_location)
-      #scale_fill_manual("",values = subpopulation_color() )
-      return(p3) 
-    }
   })
   
   output$bar_pl = renderPlot({
@@ -827,25 +797,8 @@ server = function(input, output, session) {
   plotData <- reactiveVal(NULL)
   
   observeEvent(input$runa,{
-    
-    showModal( modalDialog(
-      h4(paste0("Extracting genomic data for ",nrow(phe())," genotypes:")),
-      footer=tagList(h3("running..."))
-    ))
-    
-    qc_linux(input$gwasfile$datapath, input$genofile$datapath,
-             input$genovcf$datapath,dir)
-    
-    output$pca_plot <- renderImage({
-      outfile <- tempfile(fileext = '.png')
-      list(src = file.path(file.path(dir,"pca_plot_2D.png")),
-           contentType = 'image/png',
-           width = 400,
-           height = 300,
-           alt = "This is alternate text")
-    }, deleteFile = F)
-    
-    removeModal()
+    req(input$genofile)
+    req(input$pcafile)
     
     showModal( modalDialog(
       h4(paste0("GWAS for ",nrow(phe())," genotypes:")),
@@ -854,10 +807,21 @@ server = function(input, output, session) {
     
     dir.create(file.path(dir,"results"))
     write.csv(phe() ,file.path(dir,"results",file = "pheno.csv"),row.names = F)
-    #   
+    
+    pca_plot(input$pcafile$datapath) 
+    
+    output$pca_plot <- renderImage({
+      outfile <- tempfile(fileext = '.png')
+      list(src = file.path("pca_plot_2D.png"),
+           contentType = 'image/png',
+           width = 400,
+           height = 300,
+           alt = "This is alternate text")
+    }, deleteFile = F)
+    
     result <- mrMLM(fileGen = input$genofile$datapath, 
                     filePhe = file.path(dir, "results",file = "pheno.csv"),
-                    fileKin = NULL, filePS = "pca.csv",
+                    fileKin = NULL, filePS = input$pcafile$datapath,
                     PopStrType = "PCA",fileCov = NULL, Genformat = "Cha",
                     method=c("mrMLM","FASTmrMLM","FASTmrEMMA","ISIS EM-BLASSO","pLARmEB"),
                     trait = 1:1, SearchRadius = 50, CriLOD = 3,SelectVariable = 50,
@@ -878,12 +842,7 @@ server = function(input, output, session) {
         removeModal()
       })
       
-      #     #EDITED reading the images
-      # Sys.sleep(2)
-      # manp = load.image(file.path(dir,"results","1_Manhattan plot.jpeg"))
-      # Sys.sleep(2)
-      # qqp =  load.image(file.path(dir,"results","1_qq plot.jpeg"))
-      
+     
       output$man <- renderImage({
         outfile <- tempfile(fileext = '.jpeg')
         list(src = file.path(dir,"results","1_Manhattan plot.jpeg"),
@@ -902,12 +861,6 @@ server = function(input, output, session) {
              alt = "This is alternate text")
       }, deleteFile = F)
       
-      # output$man = renderPlot({
-      #   plot(manp)
-      # })
-      # output$QQ = renderPlot({
-      #   plot(qqp)
-      # })
       
       #we are chaning the above to all rs ids even if they come once
       res <- read.csv(file = file.path(dir,"results","1_Final result.csv"))
