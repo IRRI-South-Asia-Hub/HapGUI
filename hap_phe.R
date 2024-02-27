@@ -6,9 +6,9 @@ hap_phe <- function(gene_infile, pheno_file, select_cri, dir){
   colnames(genes1) <- "V1"
   genes <- genes1$V1
   #genes <- genes[-c(1:190)]
-  sup.hap <- matrix(nrow = 0,ncol = ncol(all_pheno))
+  sup.hap <- matrix(nrow = 0,ncol = 3)
   sup.hap <- data.frame(sup.hap)
-  colnames(sup.hap) <- colnames(all_pheno)
+  colnames(sup.hap) <- c(colnames(all_pheno),"Hap.Avg")
   colnames(sup.hap)[1] <- "LOC_ID"
   #---------------------------------------------------------------------------
   duncan.multiple <-function (y, trt, DFerror, MSerror, alpha=0.05, group=TRUE,main = NULL,console=FALSE)
@@ -297,8 +297,8 @@ hap_phe <- function(gene_infile, pheno_file, select_cri, dir){
         
         colnames(pheno)[1]<-"Designation"
         
-        pheno <-pheno %>% dplyr::select(1,colnames(pheno)[2])
-        
+        pheno$Designation <- gsub('IRIS ', 'IRIS-', pheno$Designation,fixed = T)
+
         haplopheno <- merge(var_pheno, pheno, by.x = 'ASSAY.ID', by.y = 'Designation')
         
         haplopheno$group<- as.factor(haplopheno$group)
@@ -331,7 +331,7 @@ hap_phe <- function(gene_infile, pheno_file, select_cri, dir){
           
           sink()
           
-          if( sum(aooov$effects == 0)){
+          if( sum(aooov$effects) == 0){
             sink(file.path(dir,gun,jun, "no_anova.txt"))
             print(" no duncan test can be performed contrasts can be applied only to factors with 2 or more levels")
             sink()
@@ -339,12 +339,8 @@ hap_phe <- function(gene_infile, pheno_file, select_cri, dir){
           }
           else {
             
-            
             sink(file.path(dir,gun,jun,"duncan.txt"))
-            
             print(duncan<- duncan.multiple(aooov,trt = "Haplotype",console = TRUE, group = T))
-            
-            
             sink()
             
             sink(file.path(dir,gun,jun,"duncan_pval.txt"))
@@ -530,7 +526,7 @@ hap_phe <- function(gene_infile, pheno_file, select_cri, dir){
         
         colnames(pheno)[1]<-"Designation"
         
-        pheno <-pheno %>% dplyr::select(1,colnames(pheno)[2])
+        pheno$Designation <- gsub('IRIS ', 'IRIS-', pheno$Designation,fixed = T)
         
         haplopheno <- merge(var_pheno, pheno, by.x = 'Accession', by.y = 'Designation')
         
@@ -565,7 +561,7 @@ hap_phe <- function(gene_infile, pheno_file, select_cri, dir){
           
           sink()
           
-          if( sum(aooov$effects == 0)){
+          if( sum(aooov$effects) == 0){
             sink(file.path(dir,gun,jun, "no_anova.txt"))
             print(" no duncan test can be performed contrasts can be applied only to factors with 2 or more levels")
             sink()
@@ -662,7 +658,7 @@ hap_phe <- function(gene_infile, pheno_file, select_cri, dir){
       }
       if( gcc=="NA"){
         #gcc<- "NA"
-        gc<- c(gc,gcc)
+        gc<- c(gc,gcc,"NA")
         rm(gcc)
         #rm(aooov)
       }
@@ -692,8 +688,14 @@ hap_phe <- function(gene_infile, pheno_file, select_cri, dir){
                        paste("(", round(mean_val[,1],2),"±",round(mean_val[,2],2), ")", sep = ""),
                        collapse = ",") # change
         
+        other_mean_val <- subset(summary, !(rownames(summary) %in% happi))
+        
+        other_happi <- str_c(row.names(other_mean_val),
+                       paste("(", round(other_mean_val[,1],2),"±",round(other_mean_val[,2],2), ")", sep = ""),
+                       collapse = ",") # change
+        
         sum1 <- summary[,1]
-        gc<-c(gc,happi)
+        gc<-c(gc,happi,other_happi)
         #rm(aooov)
         #rm(duncan)
         #rm(duncan.pval)
@@ -702,7 +704,10 @@ hap_phe <- function(gene_infile, pheno_file, select_cri, dir){
       }
       else {
         hf<- "no"
-        gc<- c(gc,hf)
+        all_happi <- str_c(row.names(summary),
+                             paste("(", round(summary[,1],2),"±",round(summary[,2],2), ")", sep = ""),
+                             collapse = ",") # change
+        gc<- c(gc,hf, all_happi)
         #rm(aooov)
         #rm(duncan)
         #rm(duncan.pval)
@@ -716,7 +721,7 @@ hap_phe <- function(gene_infile, pheno_file, select_cri, dir){
     #setwd(file.path(dir,gun))
     
     name <- colnames(all_pheno)
-    names(gc)<- name
+    names(gc)<- c(name,"Hap.Avg")
     names(gc)[1] <- "LOC_ID"
     gc<- t(data.frame(gc))
     sup.hap<-rbind(sup.hap,gc)

@@ -231,7 +231,8 @@ ui = fluidPage(tagList(
                    
                    #----------MTAs------
                    tabPanel("MTAs",fluid = T,
-                            tableOutput("result_table")
+                            tableOutput("result_table"),
+                            downloadButton("downloadData","Download GWAS results"),
                    ),
                  )
                )
@@ -801,7 +802,7 @@ server = function(input, output, session) {
     req(input$pcafile)
     
     showModal( modalDialog(
-      h4(paste0("GWAS for ",nrow(phe())," genotypes:")),
+      h4(paste0("GWAS for ",names(phe())[2],":")),
       footer=tagList(h3("running..."))
     ))
     
@@ -841,17 +842,16 @@ server = function(input, output, session) {
       observeEvent(input$ok_gwas, {
         removeModal()
       })
-      
      
       output$man <- renderImage({
         outfile <- tempfile(fileext = '.jpeg')
         list(src = file.path(dir,"results","1_Manhattan plot.jpeg"),
              contentType = 'image/jpeg',
-             width = 400,
+             width = 500,
              height = 300,
              alt = "This is alternate text")
       }, deleteFile = F)
-      
+
       output$QQ <- renderImage({
         outfile <- tempfile(fileext = '.jpeg')
         list(src = file.path(dir,"results","1_qq plot.jpeg"),
@@ -860,8 +860,7 @@ server = function(input, output, session) {
              height = 300,
              alt = "This is alternate text")
       }, deleteFile = F)
-      
-      
+
       #we are chaning the above to all rs ids even if they come once
       res <- read.csv(file = file.path(dir,"results","1_Final result.csv"))
       out <- res[!duplicated(res$RS.),]
@@ -873,12 +872,29 @@ server = function(input, output, session) {
       }
       
       candgene_ind <- out[,c(5,6)]
-      write_csv(candgene_ind, file.path(dir, "POS.csv"))
+      write_csv(candgene_ind, file.path(dir, "pos.csv"))
       write.csv(out[,c(2:8)],file.path(dir,"Identified_MTAs.csv"),row.names = F) 
       
       output$result_table = renderTable({
         return(out)
       })
+      
+      output$downloadData <- downloadHandler(
+        filename <- function() {
+          paste("output", "zip", sep=".")
+        },
+        content <- function(file) {
+          dir.create("out")
+          system(paste0("cp pos.csv Identified_MTAs.csv results/*.csv ",
+                        "results/*.jpeg ",
+                        "out"))
+          files2zip <- dir('out', full.names = TRUE)
+          zip(zipfile = 'testZip', files = files2zip)
+          file.copy("testZip.zip", file)
+        },
+        contentType = "application/zip"
+      )
+      
     }else{
       output$analysis_complete = renderText({
         print("....GWAS analysis started....")
