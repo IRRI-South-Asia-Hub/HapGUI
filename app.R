@@ -1,4 +1,4 @@
-dir <- getwd()
+dir <- ""
 
 
 #all libraries needed
