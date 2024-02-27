@@ -1,4 +1,4 @@
-dir <- destdir
+dir <- getwd()
 
 
 #all libraries needed
