@@ -1,4 +1,4 @@
-dir <- ""
+dir <- getwd()
 
 
 #all libraries needed
@@ -244,6 +244,7 @@ ui = fluidPage(tagList(
              sidebarLayout(
                sidebarPanel(
                  fileInput("hapfile","Phenotypic file input:"),
+                 fileInput("posfile","MTA file input:"),
                  numericInput("LD", "LD region", 25000,min = 1000, max = 250000),
                  radioButtons("hl","Choose high/low value haplotypes",choices = c("High","Low")),
                  actionButton("runhap","Run Haplo-Pheno")
@@ -890,7 +891,7 @@ server = function(input, output, session) {
   
   #Hap-Phe tabs----
   observeEvent(input$runhap,{
-    
+    req(input$posfile)
     gene <- reactiveVal(NULL)
     req(input$LD)
     
@@ -900,7 +901,7 @@ server = function(input, output, session) {
       return(a)
     })
     
-    df <- candidate_gene(file.path(dir,"POS.csv"),input$LD, genes_file)
+    df <- candidate_gene(input$posfile$datapath,input$LD, genes_file)
     df2 = df[["gene_id"]]
     write.csv(df2,"locus.csv",row.names = F)
     
