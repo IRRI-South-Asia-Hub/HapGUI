@@ -26,22 +26,25 @@ If you want to see all the files at your desired directory,u can use
 shiny::runGitHub(repo = "HaploGUI","IRRI-South-Asia-Hub",destdir = "D:/foldername/foldername2")
 ```
 
-3K PLOTS: The simplest data visualization and analysis tool for 3k population data
+## 3K PLOTS: The simplest data visualization and analysis tool for 3k population data
 
-1. Availability 
+### 1. Availability 
 The web application named NAME is based on the R shiny package.
 It is available on both the shinyapp.io server and the GitHub repository and does not require pre-installation software or packages, except for the GitHub option (see 1.2)
 
-1.1 Shinyapp.io
+#### 1.1 Shinyapp.io
 The web app can be accessed by simply going to the link  (www.link1.com) 
-1.2 GitHub
+
+#### 1.2 GitHub
 The 3k plots have also been hosted in the GitHub repository of the IRRI South Asia GitHub account.
 To be able to run the Shiny app using the hosted GitHub repository we must have the R programming language installed in our device along with a suitable IDE (like Rstudio), further, we need to install the package Shiny using the command install.packages(“shiny”),
 More information on how to run the web app is mentioned in section 2.
-1.2.1 Installing R
+
+#### 1.2.1 Installing R
 We can go to the Cran.r repository and download the R programming language, later we can go to the posit repository and download the R studio, the following steps can be followed for the same.
 https://teacherscollege.screenstepslive.com/a/1108074-install-r-and-r-studio-for-windows
-1.2.2 Installing Rshiny
+
+#### 1.2.2 Installing Rshiny
 
 After installation of the R program and R studio, we should open R studio and put the command install.packages(“shiny”)  and run it, This will install the R shiny package.
  
@@ -49,9 +52,9 @@ After installation of the R program and R studio, we should open R studio and pu
 
 
 
-2. Pre-requisites 
+### 2. Pre-requisites 
 
-2.1 Shinyapps.io
+#### 2.1 Shinyapps.io
 To be able to use the web application hosted in the shiny app.io, we only need an internet connection and a browser available on our device.
 Simply, click on the link mentioned in section 1 () and we will have the interface right in front of us, read section 3 to understand the components of the interface and section 4 for implementation and data preparation.
 
@@ -60,10 +63,10 @@ To be able to use the web application hosted in the GitHub repository we need an
 After all the installation mentioned in section 1.2, we should open the RStudio and use the command runGitHub("3K Plots”, “IRRISAH”).
 In the presence of a good internet connection, The above command must open the interface.
 3. The Interface
-3.1 Sidebar Panels
+#### 3.1 Sidebar Panels
 There are a total of three independent panels with three different sets of functionalities, viz. plots, GWAS and Haplo pheno. We can click on each tab heading to proceed with their functionalities.
 
-3.1.1 Input file for Plots tab
+#### 3.1.1 Input file for Plots tab
 The Input phenotypic file must be in the CSV format (comma delimited values, i.e.,.csv extension), we don’t recommend renaming the .xlsx files into .csv, rather we encourage saving the sheets in a CSV format.
 
 It is necessary to maintain the order of the data in the following order:
@@ -86,9 +89,9 @@ These are the columns where the column header is the name of the trait and colum
 The Phenotypic files must contain a Genotypes identification column, which will have accessions for our genotypes, currently, we support three types of IDs:” IRIS_ID”,” IRGC_NO” or ”accession ID “An example file is available at (www.link2.com) 
 Note: These IDs must belong to the 3K rice genome (if not it will not generate the topmost plots but will generate the other plots depending on what information you have)
 Examples of three IDs:
-1.IRIS_ID: IRIS-313-10000
-2. IRGC_NO: IRGC 135900
-3. ACCESSION: QIUGUANGTENGXI
+#### 1.IRIS_ID: IRIS-313-10000
+#### 2. IRGC_NO: IRGC 135900
+#### 3. ACCESSION: QIUGUANGTENGXI
 
 
 BLOCKS column
