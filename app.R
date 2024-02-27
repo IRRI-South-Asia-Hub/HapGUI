@@ -1,5 +1,4 @@
-setwd("~/Documents/HaploGUI_part2/")
-dir <- getwd()
+dir <- destdir
 
 
 #all libraries needed
