@@ -249,6 +249,7 @@ ui = fluidPage(tagList(
                  numericInput("LD", "LD region", 25000,min = 1000, max = 250000),
                  radioButtons("hl","Choose high/low value haplotypes",choices = c("High","Low")),
                  actionButton("runhap","Run Haplo-Pheno")
+                 
                ),
                mainPanel(
                  tabsetPanel(
@@ -262,7 +263,8 @@ ui = fluidPage(tagList(
                             downloadButton("hapdw","download_haplotype_table"),
                             selectInput("loc_id","Choose Locus ID",choices = NULL),
                             selectInput("season_pie","Choose the season",choices = NULL),
-                            imageOutput("piechart")
+                            imageOutput("piechart"),
+                            downloadButton("downloadhapData")
                    ),
                  )
                )
@@ -983,6 +985,20 @@ server = function(input, output, session) {
            height = 300,
            alt = "This is alternate text")
     }, deleteFile = TRUE)
+    
+    output$downloadhapData <- downloadHandler(
+      filename <- function() {
+        paste("output", "zip", sep=".")
+      },
+      content <- function(file) {
+        dir.create("outhap")
+        system("cp -r LOC* outhap")
+        files2zip <- dir('outhap', full.names = TRUE)
+        zip(zipfile = 'testZip', files = files2zip)
+        file.copy("testZip.zip", file)
+      },
+      contentType = "application/zip"
+    )
     
   })
   
