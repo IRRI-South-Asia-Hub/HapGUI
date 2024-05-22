@@ -4,6 +4,7 @@ dir <- getwd()
 ip_dir <- "softwares/"
 
 #all libraries needed
+library(profvis)
 library(shiny)
 library(shinythemes)
 library(shinyFiles)
@@ -65,7 +66,7 @@ theme_cus <-theme(panel.background = element_blank(),panel.border=element_rect(f
                   axis.ticks=element_line(colour="black"),
                   plot.margin=unit(c(1,1,1,1),"line"))
 
-mysummary <- function(x,na.rm=F){
+mysummary <- function(x,na.rm=T){
   res <- list(Minimum=min(x, na.rm=na.rm),
               Maximum=max(x, na.rm=na.rm),
               Mean=mean(x, na.rm=na.rm),
@@ -340,7 +341,7 @@ ui = fluidPage(tagList(
 
 #Server start----
 server = function(input, output, session) {
-  
+
   pop =  reactive({
     pop <- read.delim("Edited all population.txt", header = T)
     names(pop) <- c("Designation","Name","Subpopulation","COUNTRY","IRGC")
@@ -415,7 +416,8 @@ server = function(input, output, session) {
     ycol <- "Name"
     
     if(input$type == "IRIS_ID"){
-      ycol <- "Designation" 
+      ycol <- "Designation"
+      trait_d$Name <- gsub("IRIS 313","IRIS_313",trait_d$Name)
     }else if(input$type == "IRGC_NO"){
       ycol <- "IRGC" 
     }
@@ -468,7 +470,8 @@ server = function(input, output, session) {
     
     #This allows people to choose whether they have IRS_ID or Accession file
     if(input$type == "IRIS_ID"){
-      ycol <- "Designation" 
+      ycol <- "Designation"
+      as$Name <- gsub("IRIS 313","IRIS_313",as$Name)
     }else if(input$type == "IRGC_NO"){
       ycol <- "IRGC" 
     }
@@ -570,10 +573,6 @@ server = function(input, output, session) {
   })
   
   bar_others = reactive({
-    
-    
-    
-    
     
     if(input$bar_season != "null"){
       df <- data_summary(data_sub(), varname="phenotype", 
@@ -703,6 +702,7 @@ server = function(input, output, session) {
   
   break_summ = reactive({
     column_data <- trait()[,-c(3,4)]
+    colnames(column_data)[1:2] <- c("LOCATION","SEASON")
     summary_stats <- melt(setDT(column_data),
                           id.vars=c("LOCATION","SEASON"))[,mysummary(value),
                                                           by=.(variable,LOCATION,SEASON)]
@@ -775,8 +775,6 @@ server = function(input, output, session) {
     DAU.test(d$Block,d$id,d$ph,method = "lsd",console = T,group =F)
   })
   
-  
-  
   #NEW anova
   anova_overall = reactive({
     ds = trait()
@@ -810,49 +808,33 @@ server = function(input, output, session) {
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   
   #BLUPs----
-  output$blup_output = renderTable({
-    #introducing req button to reduce error
-    req(input$genb)
-    
-    d = trait()
-    #removing nas to keep balance 
-    d = na.omit(d)
-    
-    #making blocks as factors
-    d[[input$block2]] = as.factor(d[[input$block2]])
-    
-    acc_group <- d[[input$Acc]]
-    block = d[[input$block2]]
-    
-    l = list()
-    for (i in input$non_trait){
-      model<-lmer(d[[i]]~(1|acc_group)+ block,data = d)
-      blup_val <- as.data.frame(coef(model)$acc_group)
-      names(blup_val)[which(names(blup_val)=="(Intercept)")] = paste0(i,"(adjusted)")
-      
-      #list making for column bind
-      l[[i]] = blup_val
-      #print(l)
-    }
-    
-    #creating a good d
-    k = bind_cols(l)
-    k$"Genotype" = row.names(k)
-    final =  merge(d,k,by.x = input$Acc,by.y = "Genotype")
-    return(head(final))
-  })
   
   #introducing BLUP reactive for easy downloads
   blup_out = reactive({
     #introducing req button to reduce error
     req(input$genb)
+
     d = trait()
+    names(d)[which(names(d)== input$Acc)] <- c ("Name")
     #removing nas to keep balance 
     d = na.omit(d)
     #making blocks as factors
     d[[input$block2]] = as.factor(d[[input$block2]])
-    acc_group <- d[[input$Acc]]
+    #acc_group <- d[[input$Acc]]
+    acc_group <- d[["Name"]]
     block = d[[input$block2]]
+    
+    ycol <- "Name"
+    if(input$type == "IRIS_ID"){
+      ycol <- "Designation"
+    }else if(input$type == "IRGC_NO"){
+      ycol <- "IRGC"
+    }
+    pop2 = pop()
+    pop2$Designation <- gsub("_", " ", pop2$Designation)
+    aas <- merge(d, pop2, by.x = "Name", by.y = ycol, all = F)
+    tot_col <- ncol(d)+1
+    aas <- aas[,c(tot_col,1:ncol(d),(tot_col+1):ncol(aas))]
     
     l = list()
     for (i in input$non_trait){
@@ -861,15 +843,28 @@ server = function(input, output, session) {
       names(blup_val)[which(names(blup_val)=="(Intercept)")] = paste0(i,"(adjusted)")
       #list making for column bind
       l[[i]] = blup_val
+      
     }
     
     #creating a good d?
     k = bind_cols(l)
     k$"Genotype" = row.names(k)
     
-    final =  merge(d,k,by.x = input$Acc,by.y = "Genotype")
+    final =  merge(aas,k,by.x = "Name",by.y = "Genotype")
+    if(ycol=="Designation"){
+      names(final)[which(names(final)== "Name")] <- c ("X.Phenotype.")
+    } else{
+      names(final)[which(names(final)== "Designation")] <- c ("X.Phenotype.")
+    }
+    
     return(final)
   })
+  
+  output$blup_output = renderTable({
+    final <- blup_out()
+    return(head(final))
+  })
+  
   
   output$blup_dw = downloadHandler(
     filename = function(){
@@ -1134,10 +1129,10 @@ server = function(input, output, session) {
     processingResult()
     
     et_out <- paste(input$Trait,"_intermediate_result",
-                    as.numeric(input$Bulk_size),".txt",sep = "")
+                    as.numeric(input$Bulk_size),".csv",sep = "")
     
     et_fout <- paste(input$Trait,"_Final_result",
-                     as.numeric(input$Bulk_size),".txt",sep = "")
+                     as.numeric(input$Bulk_size),".csv",sep = "")
     
     
     if(file.exists(file.path(dir,"EtGWAS_results",et_out))){
@@ -1161,11 +1156,11 @@ server = function(input, output, session) {
   
   output$plot1 <- renderPlot({
     if (!is.null(plotData()))
-      plotData()$plot1
+      plotData()$plot5
   })
   output$plot2 <- renderPlot({
     if (!is.null(plotData()))
-      plotData()$plot2
+      plotData()$plot6
   })
   
   output$plot3 <- renderImage({
@@ -1312,5 +1307,5 @@ server = function(input, output, session) {
   
   #end of server--nextline
 }
-
 shinyApp(ui,server)
+#profvis::profvis(runApp(shinyApp(ui,server)))
