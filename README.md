@@ -17,13 +17,13 @@ After running the following codes we need to run the following command to view t
 run the following code
 
 ```R
-shiny::runGitHub(repo = "HaploGUI","IRRI-South-Asia-Hub")
+shiny::runGitHub(repo = "HapGUI","IRRI-South-Asia-Hub")
 ```
 
 If you want to see all the files at your desired directory,u can use 
 
 ```R
-shiny::runGitHub(repo = "HaploGUI","IRRI-South-Asia-Hub",destdir = "D:/foldername/foldername2")
+shiny::runGitHub(repo = "HapGUI","IRRI-South-Asia-Hub",destdir = "D:/foldername/foldername2")
 ```
 
 ## 3K PLOTS: The simplest data visualization and analysis tool for 3k population data
