@@ -5,7 +5,7 @@ hap_phe2 <- function(gene_infile, pheno_file, select_cri, dir){
   names(all_pheno)[1] <- "X.Phenotype."
   
   colnames(genes1) <- "V1"
-  genes <- genes1$V1
+  genes <- unique(genes1$V1)
   
   sup.hap <- matrix(nrow = 0,ncol = 3)
   sup.hap <- data.frame(sup.hap)
@@ -733,7 +733,9 @@ hap_phe2 <- function(gene_infile, pheno_file, select_cri, dir){
     
   }
   colnames(sup.hap) <- c("LOC_ID","SH","Other.haps")
-  write.csv(sup.hap,file = file.path(dir,"superior_haplotypes.csv"), row.names = F)
+  
+  write.csv(sup.hap,file = file.path(dir,"superior_haplotypes.csv"),
+            row.names = F)
   
   return(sup.hap)
 }

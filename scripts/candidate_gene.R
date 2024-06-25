@@ -26,7 +26,8 @@ candidate_gene <- function(pos_infile,ld, genes_file){
   candidates <- bind_rows(candigene_ind)
   
   names(candidates)[1] <- "gene_id"
-  write.csv(candidates,"candidate_genes.csv",row.names = F)
+  meth <- unlist(strsplit(pos_infile,split = "_"))[1]
+  write.csv(candidates,paste0(meth,"_candidate_genes.csv"),row.names = F)
   
   return(candidates)
 }

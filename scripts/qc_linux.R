@@ -1,4 +1,4 @@
-qc_linux <- function(phefile, ip_dir){
+qc_linux <- function(phefile, ip_dir, choose_geno){
 
   phe <- read.csv(phefile, header = T)
   colnames(phe) <- c("Accessions","trait")
@@ -8,10 +8,20 @@ qc_linux <- function(phefile, ip_dir){
   out1 <- phe[,c(1,1)]
   write.table(out1, file = "id.txt", col.names = F, 
               row.names = F,quote = F)
+  
+  if (choose_geno == "Default"){
+    genofile = "marker_main"
+    }
+  
+  if (choose_geno == "External"){
+    genofile = "extra_marker"
+  }
+  
+  system(command = paste0(ip_dir, "/plink2 --bfile ", genofile, " --keep id.txt --export vcf --out marker_temp"))
 
-  system(command = paste0(ip_dir, "/plink2 --bfile marker_main --keep id.txt --export vcf --out marker"))
-
-  system(command = paste0(ip_dir,"/tassel-5-standalone/run_pipeline.pl -fork1 -vcf marker.vcf -export marker -exportType Hapmap"))
+  system(command = paste0(ip_dir, "/plink2 --vcf marker_temp.vcf --maf 0.05 --export vcf --out marker"))
+  
+  system(command = paste0(ip_dir,"/tassel-5-standalone/run_pipeline.pl -fork1 -vcf marker.vcf -homozygous -export marker -exportType Hapmap"))
 
   mar <- read.delim2(file = "marker.hmp.txt",header = F)
 
@@ -38,7 +48,7 @@ qc_linux <- function(phefile, ip_dir){
   write.csv(mar, file = "marker.csv",row.names = FALSE) #write processed data to CSV
 
   #Et-GWAS
-  system(paste0(ip_dir,"/plink2 --bfile marker_main --keep id.txt --make-bed --out marker"))
+  system(paste0(ip_dir,"/plink2 --bfile ", genofile ," --keep id.txt --make-bed --out marker"))
   
   # PCA ---------------------------------------------------------------------
 
@@ -92,29 +102,39 @@ qc_linux <- function(phefile, ip_dir){
   p1 <- ggplot(comb_p,aes(x=PC1,y=PC2, color=Subpopulation)) + 
     geom_jitter() +
     theme_cus +
-    scale_color_manual(breaks = c("temp", "aus", "trop", "indx", "ind1A", "ind1B", "admix", "ind2", "subtrop", "japx", "ind3", "aro"),
-                       values = c("#F1948A", "#D7BDE2", "#E6B0AA", "#D4E6F1", "#2E86C1", "#2E86C1", "#5499C7", "#CCD1D1", "#85C1E9", "#CD6155", "#E74C3C", "#A9CCE3", "#A9DFBF"))
+    scale_color_manual(breaks = c("indx","ind2","ind1B","ind1A","ind3",
+                                  "aus","japx","temp",
+                                  "trop","subtrop","admix","aro" ),
+                       values = c( "#56B4E9", "#56B4E9","#0072B2", "#293352","#00AFBB",
+                                   "#000000", "#E69F00","#F0E442",
+                                   "#D55E00", "#CC79A7","#999999", "#52854C"))
   
-  p2 <- ggplot(comb_p,aes(x=PC1,y=PC3, color=Subpopulation)) +
+  p2 <- ggplot(comb_p,aes(x=PC3,y=PC1, color=Subpopulation)) +
     geom_jitter()+
     theme_cus + theme(legend.position = "none")+
-    scale_color_manual(breaks = c("temp", "aus", "trop", "indx", "ind1A", "ind1B", "admix", "ind2", "subtrop", "japx", "ind3", "aro"),
-                       values = c("#F1948A", "#D7BDE2", "#E6B0AA", "#D4E6F1", "#2E86C1", "#2E86C1", "#5499C7", "#CCD1D1", "#85C1E9", "#CD6155", "#E74C3C", "#A9CCE3", "#A9DFBF"))
+    scale_color_manual(breaks = c("indx","ind2","ind1B","ind1A","ind3",
+                                  "aus","japx","temp",
+                                  "trop","subtrop","admix","aro" ),
+                       values = c( "#56B4E9", "#56B4E9","#0072B2", "#293352","#00AFBB",
+                                   "#000000", "#E69F00","#F0E442",
+                                   "#D55E00", "#CC79A7","#999999", "#52854C"))
   
   p3 <- ggplot(comb_p,aes(x=PC2,y=PC3, color=Subpopulation)) +
     geom_jitter()+
     theme_cus + theme(legend.position = "none")+
-    scale_color_manual(breaks = c("temp", "aus", "trop", "indx", "ind1A", "ind1B", "admix", "ind2", "subtrop", "japx", "ind3", "aro"),
-                       values = c("#F1948A", "#D7BDE2", "#E6B0AA", "#D4E6F1", "#2E86C1", "#2E86C1", "#5499C7", "#CCD1D1", "#85C1E9", "#CD6155", "#E74C3C", "#A9CCE3", "#A9DFBF"))
-  
+    scale_color_manual(breaks = c("indx","ind2","ind1B","ind1A","ind3","aus","japx","temp",
+                                  "trop","subtrop","admix","aro" ),
+                       values = c( "#56B4E9", "#56B4E9","#0072B2", "#293352","#00AFBB",
+                                   "#000000", "#E69F00","#F0E442", "#D55E00", "#CC79A7","#999999", "#52854C"))
   ar <- ggarrange(p1,ggarrange(p2,p3,labels = c("B", "C"),ncol = 2,nrow = 1),
                   ncol = 1,nrow = 2,labels = "A",
                   common.legend = T, legend = "bottom")
-  ar
+  
+  ar2 <- ggarrange(p1,p2,labels = c("A", "B"),ncol = 2,nrow = 1, legend = "bottom")
   
   ggsave("pca_plot_2D.png",plot = p1, width = 12, height = 10,
-         dpi = 300, units = "cm")
-  ggsave("pca_plot_all.png",plot = ar, width = 12, height = 10,
+         dpi = 600, units = "cm")
+  ggsave("pca_plot_all.png",plot = ar2, width = 20, height = 18,
          dpi = 300, units = "cm")
   return(mar)
 }

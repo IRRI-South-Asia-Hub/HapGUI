@@ -18,5 +18,5 @@ esac
 done
 
 #awk '{print $2}' $trait".hmp.txt" | awk -F "/" 'OFS="\t" {print $1,$2}' > $trait"_hmp_allele.txt"
-awk 'OFS="\t" {print $3,$4}' "marker.afreq" > $infile
+awk 'OFS="\t" {print $3,$4}' "et_marker.afreq" > $infile
 sed -i "1s/.*/Ref\tAlt/" $infile

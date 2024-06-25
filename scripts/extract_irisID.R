@@ -133,13 +133,14 @@ extract_irisID <- function(trait, infile, perc, dir, ip_dir){
           axis.ticks = element_line(colour = "black"),
           axis.text.x=element_text(colour="black", size = 12),
           axis.text.y=element_text(colour="black", size = 12)) +
-    geom_bar(data=subset(b,group==1),col="black", fill="red", 
+    geom_bar(data=subset(b,group==1), colour="red",lwd=2, 
              alpha = 0.5)+
-    geom_bar(data=subset(b,group==2),col="black", fill="green", 
+    geom_bar(data=subset(b,group==2),colour="green",lwd=2, 
              alpha = 0.5) +
-    geom_bar(data=subset(b,group==3),col="black", fill="blue", 
+    geom_bar(data=subset(b,group==3),colour="blue",lwd=2, 
              alpha = 0.5, )+
     facet_grid(. ~ group, scales = "free", labeller = labeller(group = supp.labs))
+  dist
   #dev.off()
   ggsave(image_file, dist, width = 8, height = 6)
   
@@ -205,6 +206,8 @@ extract_irisID <- function(trait, infile, perc, dir, ip_dir){
   
   allele_file <- paste0(data_dir,trait,"_hmp_allele.txt")
   
+  system(command = paste0(ip_dir, "/plink2 --bfile ",data_dir, infam," --freq --out et_marker"))
+                          
   system(paste0("bash scripts/pooling_snp.sh -h ",allele_file))
   
   bulks <- c("high","low","rand")
@@ -287,10 +290,10 @@ extract_irisID <- function(trait, infile, perc, dir, ip_dir){
   # Association -------------------------------------------------------------
   mapfile <- paste0(data_dir,infam,".map")
 
-  outfile <- paste(data_dir,trait,"_intermediate_result",perc,".txt",sep = "")
-  outqtls <- paste(data_dir,trait,"_qtls",perc,".txt",sep = "")
-  outsnps <- paste(data_dir,trait,"_Final_result",perc,".txt",sep = "")
-  outpos <- paste(data_dir,trait,perc,"_pos",".csv",sep = "")
+  outfile <- paste(data_dir,trait,"_intermediate_result",perc,".csv",sep = "")
+  outqtls <- paste(data_dir,trait,"_qtls",perc,".csv",sep = "")
+  outsnps <- paste(data_dir,trait,"_Final_result",perc,".csv",sep = "")
+  outpos <- paste(dir,"/Et-GWAS","_pos_",trait,perc,".csv",sep = "")
   
   input <- final
   input[is.na(input)]=0
@@ -318,37 +321,39 @@ extract_irisID <- function(trait, infile, perc, dir, ip_dir){
   
   qval <- xpgwas_modified(input, filter=50,  plotlambda=TRUE)
   
+  write.csv(qval, file = outfile, row.names = F)
+  
   b <- qval[,c(1:3,5)]
   names(b) <- c("SNP","Chromosome","Position","trait1")
+
+  suggestiveline = (0.05/nrow(b))*nrow(phe)
+  genomewideline = (0.01/nrow(b))*nrow(phe)
   
-  #marker_val <- (0.05/nrow(b))*nrow(phe)
-  marker_val <- 0.9
-  suggestiveline = -log10(marker_val)
-  genomewideline = -log10(0.05/nrow(b))
-  
-  CMplot(b,plot.type="m",threshold=c(genomewideline,suggestiveline),
+  CMplot(b,plot.type="m",threshold=c(suggestiveline,genomewideline),
          threshold.col=c('red','orange'),
          multracks=FALSE, chr.den.col=NULL,
          file.name = paste0(trait,"_",perc),
-         file="jpg",dpi=600,file.output=TRUE,verbose=TRUE,width=10,height=10)
+         file="jpg",dpi=600,file.output=TRUE,verbose=TRUE,width=14,height=10)
   
   system(command = paste0("cp *",trait,"_",perc,".jpg ",data_dir,
   trait,"_",perc,"Manhattan.jpg"))
-  
-  write.table(qval, file = outfile, col.names = T, row.names = F, 
-              quote = F,sep = "\t")
-  
+
   #xpplot_mine
   
   # Findign significant snps ------------------------------------------------
 
   qval$log10p <- -log10(qval$pval)
   SNPset <- qval
-  qtltable <- SNPset[SNPset$log10p >= suggestiveline,]
-  write.table(qtltable, file = outsnps, col.names = T, row.names = F, 
-              quote = F, sep = "\t")
+  suggestiveline = -log10((0.05/nrow(b))*nrow(phe))
   
-  write.csv(qtltable[,c(1:3)], file = outpos, row.names = F)
+  qtltable <- SNPset[SNPset$log10p >= suggestiveline,]
+
+  write.csv(qtltable, file = outsnps, row.names = F)
+  
+  pos_file <- qtltable[,c(2,3)]
+  colnames(pos_file) <- c("Chromosome","Marker.position..bp.")
+  
+  write.csv(pos_file, file = outpos, row.names = F)
   
   qtltable <- SNPset %>% dplyr::mutate(passThresh = log10p >= suggestiveline) %>%
     dplyr::group_by(chr, run = {
@@ -367,8 +372,7 @@ extract_irisID <- function(trait, infile, perc, dir, ip_dir){
                        .groups = 'drop')
   }
   names(qtltable)[1] <- "CHR"
-  write.table(qtltable, file = outqtls, col.names = T, row.names = F, 
-              quote = F, sep = "\t")
+  write.csv(qtltable, file = outqtls,row.names = F)
   print("everything is done")
   
   list(plot1 = box, plot2 = his, plot5 = dist, plot6 = dist2)
