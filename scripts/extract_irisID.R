@@ -22,8 +22,8 @@ extract_irisID <- function(trait, infile, perc, dir, ip_dir){
   
   phe <- read.csv(infile, header = T)
   colnames(phe) <- c("Accessions","trait")
-  phe$Accessions <- gsub(pattern = "IRIS ",replacement = "IRIS_",
-                        phe$Accessions)
+  # phe$Accessions <- gsub(pattern = "IRIS ",replacement = "IRIS_",
+  #                       phe$Accessions)
   
   box <- ggplot(phe) + aes(y = trait) +
     geom_boxplot(fill = "#0c4c8a") + theme_cus + xlab("") + ylab(trait)
@@ -39,33 +39,15 @@ extract_irisID <- function(trait, infile, perc, dir, ip_dir){
               quote = F)
   
   
-  # Step 2: genotypic data extract------------------------------------------------
+  # # Step 2: genotypic data extract------------------------------------------------
   infam <- "marker_etgwas"
-  
-  a <- read.delim("marker.fam", header = F,sep = "")
-  names(a)[1:6] <- c("Fam_ID","Ind_ID","Paternal","Maternal","Sex","Phenotype")
-  b <- phe
-  names(b) <- c("IRIS.ID","Phenotype")
-  comb <- merge(a,b, by.x = "Ind_ID", by.y = "IRIS.ID", all = F)
-  comb$Phenotype.x <- comb$Phenotype.y
-  out <- comb[!is.na(comb$Fam_ID),]
-  out <- out[,c(1:6)]
-  out$Paternal <- 0
-  out$Maternal <- 0
-  out$Sex <- 0
-  out$Phenotype.x[is.na(out$Phenotype.x)] <- -9
-  
-  write.table(out, file = paste0(data_dir,infam,".fam"), col.names = F, row.names = F,
-              quote = F, sep = " ")
-  
-  system(command = paste0("cp marker.bim ",data_dir,infam,".bim"))
-  system(command = paste0("cp marker.bed ",data_dir,infam,".bed"))
+  files_to_copy <- list.files(pattern = "^marker_etgwas", full.names = TRUE)
+  file.copy(from = files_to_copy, to = data_dir, overwrite = TRUE)
   
   system(paste0(ip_dir,"/plink2 --bfile ",
                 data_dir,infam," --export ped --out ",data_dir,infam))
   
   remove(out)
-  
   
   # pca_plink ---------------------------------------------------------------
 
@@ -95,23 +77,7 @@ extract_irisID <- function(trait, infile, perc, dir, ip_dir){
   # Initial distribution ----------------------------------------------------
   b <- read.delim(phenofile, header = T, sep = ",")
   names(b) <- c("Designation","phenotype")
-  b$Designation <- gsub(pattern = "IRIS ",replacement = "IRIS_",
-                         b$Designation)
-  
-  pop <- read.delim(popfile, header = T)
-  names(pop) <- c("IRIS.ID","Name","Subpopulation","COUNTRY","IRGC.NO")
-
   val <- ceiling((perc*nrow(b))/100)
-  
-  bb <- merge(b, pop, by.x = "Designation", by.y = "IRIS.ID", all = F)
-  b <- bb[!is.na(bb$phenotype),]
-  
-  b$Type <- b$Subpopulation
-  b$Type <- gsub(pattern = "indx",replacement = "ind",b$Type)
-  b$Type <- gsub(pattern = "ind2",replacement = "ind",b$Type)
-  b$Type <- gsub(pattern = "ind1B",replacement = "ind",b$Type)
-  b$Type <- gsub(pattern = "ind1A",replacement = "ind",b$Type)
-  b$Type <- gsub(pattern = "ind3",replacement = "ind",b$Type)
   
   low <- max(head(b[order(b$phenotype, decreasing=F), ], val)[,2])
   high <- min(head(b[order(b$phenotype, decreasing=T), ], val)[,2])
@@ -133,35 +99,13 @@ extract_irisID <- function(trait, infile, perc, dir, ip_dir){
           axis.ticks = element_line(colour = "black"),
           axis.text.x=element_text(colour="black", size = 12),
           axis.text.y=element_text(colour="black", size = 12)) +
-    geom_bar(data=subset(b,group==1), colour="red",lwd=2, 
-             alpha = 0.5)+
-    geom_bar(data=subset(b,group==2),colour="green",lwd=2, 
-             alpha = 0.5) +
-    geom_bar(data=subset(b,group==3),colour="blue",lwd=2, 
-             alpha = 0.5, )+
+    geom_histogram(data=subset(b,group==1), fill = "red", color = "red", alpha = 0.5)+
+    geom_histogram(data=subset(b,group==2), fill = "green", color = "green", alpha = 0.5) +
+    geom_histogram(data=subset(b,group==3), fill = "blue", color = "blue", alpha = 0.5)+
     facet_grid(. ~ group, scales = "free", labeller = labeller(group = supp.labs))
   dist
   #dev.off()
   ggsave(image_file, dist, width = 8, height = 6)
-  
-  image_file <- paste0(data_dir,trait,"_",perc,"_subdist1.png")
-  #png(image_file, width = 1000, height = 650)
-  dist2 <- ggplot(b, aes(x = phenotype, y = Subpopulation, fill=Subpopulation)) + 
-    geom_density_ridges2(alpha=0.5)+
-    xlab("Yield") +
-    theme(legend.position="none",
-          panel.background = element_blank(),panel.border=element_rect(fill=NA),
-          panel.grid.major = element_blank(),panel.grid.minor = element_blank(),
-          strip.background=element_blank(),
-          panel.spacing = unit(0.3, "lines"),
-          strip.text.x = element_text(size = 12),
-          axis.title.y = element_blank(),
-          axis.ticks = element_line(colour = "black"),
-          axis.text.x=element_text(colour="black", size = 12),
-          axis.text.y=element_text(colour="black", size = 12)) +
-    geom_vline(xintercept = c(low,high),linetype="dashed", color = "red")
-  #dev.off()
-  ggsave(image_file, dist2, width = 8, height = 6)
   
   pheno_out <- paste0(data_dir,trait,"_",perc,"_pheno.txt")
   write.table(b, file = pheno_out, sep = "\t", row.names = F, 
@@ -194,15 +138,14 @@ extract_irisID <- function(trait, infile, perc, dir, ip_dir){
   rand_out <- paste0(data_dir,trait,"_rand",perc)
   high_out <- paste0(data_dir,trait,"_high",perc)
   
-  system(paste0(ip_dir,"/plink --bfile ",data_dir,
-                infam," --noweb --keep ",low_in," --recode --out ",low_out))
-  
-  system(paste0(ip_dir,"/plink --bfile ",data_dir,
-                infam," --noweb --keep ",rand_in," --recode --out ",rand_out))
-  
-  system(paste0(ip_dir,"/plink --bfile ",data_dir,
-                infam," --noweb --keep ",high_in," --recode --out ",high_out))
+  system(paste0(ip_dir,"/plink2 --bfile ",data_dir,
+                infam," --keep ",low_in," --export ped --out ",low_out))
 
+  system(paste0(ip_dir,"/plink2 --bfile ",data_dir,
+                infam," --keep ",rand_in," --export ped --out ",rand_out))
+  
+  system(paste0(ip_dir,"/plink2 --bfile ",data_dir,
+                infam," --keep ",high_in," --export ped --out ",high_out))
   
   allele_file <- paste0(data_dir,trait,"_hmp_allele.txt")
   
@@ -215,7 +158,7 @@ extract_irisID <- function(trait, infile, perc, dir, ip_dir){
   pooling_snp <- function(i){
     
     infile <- paste0(data_dir,trait,"_",bulks[i],perc,".ped")
-    c <- read.delim(infile, header = F, sep = " ", colClasses = c("character"))
+    c <- read.delim(infile, header = F, sep = "\t", colClasses = c("character"))
     d <- c[,c(7:ncol(c))]
     out <- apply(d, 2, function(x){
       run = rle(sort(x[x!=0]))
@@ -249,10 +192,12 @@ extract_irisID <- function(trait, infile, perc, dir, ip_dir){
   }
   cl<- detectCores()
   registerDoParallel(cl)
-  result <- foreach (i=1:3) %dopar% {
+  result <- foreach (i=1:3, .packages = c("dplyr","data.table")) %dopar% {
     pooling_snp(i)
   }
   stopImplicitCluster()
+  
+  print("Finshed the pooling function")
   
   out_low <- read.csv(paste0(data_dir,"temp_low.csv"))
   out_high <- read.csv(paste0(data_dir,"temp_high.csv"))
@@ -375,5 +320,5 @@ extract_irisID <- function(trait, infile, perc, dir, ip_dir){
   write.csv(qtltable, file = outqtls,row.names = F)
   print("everything is done")
   
-  list(plot1 = box, plot2 = his, plot5 = dist, plot6 = dist2)
+  list(plot1 = box, plot2 = his, plot5 = dist)
 }
