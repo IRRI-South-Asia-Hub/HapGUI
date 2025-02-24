@@ -53,30 +53,41 @@ ui = fluidPage(tagList(
 
     #---plots and BLUPs----
     tabPanel("Phenotype Analysis",fluid = T,
-
+             
              sidebarLayout(
                sidebarPanel(
-
+                 
                  fileInput("pheno","Upload phenotypic data",accept = ".csv"),
-
+                 
                  #selecting input coloumns
                  selectInput("Acc","Choose genotype column",choices = NULL),
-                 selectInput("Envir1","Choose 1st environment",choices = c("None" = "")),
+                 selectInput("Envir1","Choose 1st environment",choices = c("None" = "")), 
                  selectInput("Envir2","Choose 2nd environment",choices = c("None" = "")),
-                 selectInput("Unit1","Choose 1st experiemental unit",choices = c("None" = "")),
+                 selectInput("Unit1","Choose 1st experiemental unit",choices = c("None" = "")), 
                  selectInput("Unit2","Choose 2nd experiemental unit",choices = c("None" = "")),
-
+                 
                  #adding conditional UI
                  uiOutput("cond_ui_pheno"),
-
+                 
                  actionButton("plt_bn","Generate plots"),
                ),
-
+               
                mainPanel(
                  tabsetPanel(
                    tabPanel("histogram plot",
                             selectInput("trait","Choose trait column",
                                         choices = NULL),
+                            
+                            tags$div(selectInput("Envir1_list", "Environment1", 
+                                                 choices = NULL),
+                                     style="display:inline-block"),
+                            tags$div(selectInput("Envir2_list", "Environment2", 
+                                                 choices = NULL),
+                                     style="display:inline-block"),
+                            tags$div(selectInput("Unit1_list", "Experimental Unit1", choices = c("None" = "")),
+                                     style="display:inline-block"),
+                            tags$div(selectInput("Unit2_list", "Experimental Unit2", choices = c("None" = "")),
+                                     style="display:inline-block"),
                             plotOutput("hist_pl"),
                             downloadButton("hist_dw","Download_histogram")
                    ),
@@ -88,7 +99,7 @@ ui = fluidPage(tagList(
                             plotOutput("other_violin"),
                             downloadButton("other_violin_dw","Download_violin")
                    ),
-
+                   
                    tabPanel("bar plot",
                             selectInput("trait_bar","Choose trait column",choices = c("None" = "")),
                             selectInput("bar_based","Bar plot based on:",choices = c("")),
@@ -97,18 +108,29 @@ ui = fluidPage(tagList(
                             plotOutput("other_bar"),
                             downloadButton("other_bar_dw","Download_bar")
                    ),
-
+                   
                    tabPanel("Corrplot",
                             fluidRow(
                               wellPanel(
                                 h2("Multi trait correlation"),
-
+                                selectInput("corr_envir1", "Select one Environment(1)", choices = NULL),
+                                selectInput("corr_envir2", "Select one Environment(2)", choices = NULL),
+                                
+                                selectInput("corr_unit1", "Select one Experimental unit(1)", choices = NULL),
+                                selectInput("corr_unit2", "Select one Experimental unit(2)", choices = NULL),
+                                
                                 p("Please select atleast 2 traits"),
                                 checkboxGroupInput("corr_traits","Select traits", choices = NULL),
                                 plotOutput("corr"),
                                 downloadButton("cor_dw","dowload correlation plot")
                               )),
-
+                            fluidRow(
+                              wellPanel(
+                                h2("Multi location & season correlation"),
+                                selectInput("corr_trait", "Select a Trait", choices = NULL),
+                                plotOutput("traitcorr"),
+                                downloadButton("traitcor_dw","dowload correlation plot"))
+                            )
                    ),
                    tabPanel("Descriptive Statsitics",
                             p("Please select the traits"),
@@ -120,7 +142,7 @@ ui = fluidPage(tagList(
                             tableOutput("breakup_table"),
                             downloadButton("break_summary_dw","download")
                    ),
-
+                   
                    tabPanel("ANOVA",
                             h3("Augmented RCBD ANOVA"),
                             selectInput("anova_treatment","select treatment column",choices = NULL),
@@ -129,9 +151,19 @@ ui = fluidPage(tagList(
                             actionButton("runova","run_anova"),
                             verbatimTextOutput("anova_new"),
                    ),
-
+                   
                    tabPanel("BLUPs",
                             h2("aug RCBD"),
+                            tags$div(selectInput("BEnvir1_list", "Environment1", 
+                                                 choices = NULL),
+                                     style="display:inline-block"),
+                            tags$div(selectInput("BEnvir2_list", "Environment2", 
+                                                 choices = NULL),
+                                     style="display:inline-block"),
+                            tags$div(selectInput("BUnit1_list", "Experimental Unit1", choices = c("None" = "")),
+                                     style="display:inline-block"),
+                            tags$div(selectInput("BUnit2_list", "Experimental Unit2", choices = c("None" = "")),
+                                     style="display:inline-block"),
                             selectInput("block2","Choose blocks column",choices = NULL),
                             checkboxGroupInput("non_trait", "Select traits", choices = NULL),
                             br(),
@@ -141,13 +173,14 @@ ui = fluidPage(tagList(
                             tableOutput("blup_output"),
                             br(),
                             downloadButton("blup_dw","download data with ajusted means")
-
+                            
                    ),
-
+                   
                    tabPanel("Genetic Parameters",
                             selectInput("block_gav","Choose blocks column",choices = NULL),
                             selectInput("treatment_gav","select treatment column",choices = NULL),
-                            checkboxGroupInput("traits_gav", "Select traits", choices = NULL),                            tableOutput("Gen_par"),
+                            checkboxGroupInput("traits_gav", "Select traits", choices = NULL),                            
+                            # tableOutput("Gen_par"),
                             tableOutput("Gen_par"),
                             downloadButton("Gen_dw","Download_table"),
                             #we are using index for blocks
@@ -155,8 +188,7 @@ ui = fluidPage(tagList(
                  )
                )
              )
-      ),
-
+    ),
     #Geno extract----
     tabPanel("Genofile Extract",fluid = T,
              sidebarLayout(
@@ -235,7 +267,7 @@ ui = fluidPage(tagList(
                  selectInput(inputId = "Bulk_size",
                              label = "Bulk size:",
                              choices = c("10", "15", "20")),
-
+                 
                  textInput("Trait", "Trait" , "Ex: SPY "),
                  verbatimTextOutput("value"),
                  fileInput("etgwas_pheno", "Phenotype"),
