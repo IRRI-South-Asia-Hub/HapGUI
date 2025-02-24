@@ -1,11 +1,14 @@
-hap_phe2 <- function(gene_infile, pheno_file, select_cri, dir){
-  
+hap_phe2 <- function(gene_infile, pheno_file, select_cri, dir1){
+  dir1 <- file.path(getwd(), "Haplopheno")
+  if (!dir.exists(dir1)) {
+    dir.create(dir1, recursive = TRUE)
+  }
   genes1<- read.csv(gene_infile, header = T)
   all_pheno <- read.csv(pheno_file)
   names(all_pheno)[1] <- "X.Phenotype."
   
-  colnames(genes1) <- "V1"
-  genes <- unique(genes1$V1)
+  colnames(genes1) <- "gene_id"
+  genes <- unique(genes1$gene_id)
   
   sup.hap <- matrix(nrow = 0,ncol = 3)
   sup.hap <- data.frame(sup.hap)
@@ -165,14 +168,14 @@ hap_phe2 <- function(gene_infile, pheno_file, select_cri, dir){
   ###--------------------- Superior Haplotype code -----------------------------
   for (gun in genes) {
     print(paste0(gun,": running"))
-    dir.create(file.path(dir,gun))
+    dir.create(file.path(dir1,gun))
     colm <- colnames(all_pheno)
     colm<- colm[-1]
     file_path <- paste0("snpsift/",paste0(gun,".csv"))
     
-    file.copy(from = file_path,to = paste0(dir,"/",gun,"/",gun,".csv"))
+    file.copy(from = file_path,to = paste0(dir1,"/",gun,"/",gun,".csv"))
     
-    if(!file.exists(paste0(dir,"/",gun,"/",gun,".csv"))){
+    if(!file.exists(paste0(dir1,"/",gun,"/",gun,".csv"))){
       print(paste0("Candidate gene ",gun," doesn't exist. Skipping.."))
       next
     }
@@ -180,12 +183,12 @@ hap_phe2 <- function(gene_infile, pheno_file, select_cri, dir){
     gc<-c(gun)
     
     for (jun in colm) {
-      dir.create(file.path(dir,gun,jun))
+      dir.create(file.path(dir1,gun,jun))
       P <-all_pheno %>% dplyr::select(starts_with(jun))
       row.names(P) <- all_pheno$X.Phenotype.
-      write.csv(P ,file.path(dir,gun,"pheno.csv"),row.names = TRUE)
+      write.csv(P ,file.path(dir1,gun,"pheno.csv"),row.names = TRUE)
       
-      haplo_P <- file.path(dir,gun,jun)
+      haplo_P <- file.path(dir1,gun,jun)
       z<- haplo_P
       # setwd(paste0(z))
       
@@ -193,11 +196,11 @@ hap_phe2 <- function(gene_infile, pheno_file, select_cri, dir){
       filenames<- gsub(".csv","",filenames)
       
       y<- filenames
-      a <- read.csv(paste0(dir,"/",gun,"/",y,".csv"), header = F, stringsAsFactors = FALSE)
+      a <- read.csv(paste0(dir1,"/",gun,"/",y,".csv"), header = F, stringsAsFactors = FALSE)
       snpfile<- y
       if (ncol(a) <=1) {
         #dir.create(paste0(snpfile,""))
-        write.csv(a,file.path(dir,gun,jun,"NULL.csv"))
+        write.csv(a,file.path(dir1,gun,jun,"NULL.csv"))
         gcc<- "all"
         
       } 
@@ -211,8 +214,8 @@ hap_phe2 <- function(gene_infile, pheno_file, select_cri, dir){
         
         a[is.na(a)] <- "-"
         
-        b <- a %>% filter(across(everything(a), ~ !grepl("/",.)))
-        b <- b %>% filter(across(everything(b), ~ !grepl("N",.)))
+        b <- a %>% filter(if_all(everything(), ~ !grepl("/",.)))
+        b <- b %>% filter(if_all(everything(), ~ !grepl("N",.)))
         
         colnames(b)[1] <- c("ASSAY.ID")
         
@@ -232,7 +235,7 @@ hap_phe2 <- function(gene_infile, pheno_file, select_cri, dir){
         
         #dir.create(paste0(snpfile,""))
         
-        sink(file.path(dir,gun,jun,"Sequence.fas"))
+        sink(file.path(dir1,gun,jun,"Sequence.fas"))
         
         for (j in 1:nrow(as)){
           name = paste0(">",as[j,1])
@@ -242,7 +245,7 @@ hap_phe2 <- function(gene_infile, pheno_file, select_cri, dir){
         }
         sink()
         
-        x<- read.fas(file.path(dir,gun,jun,"Sequence.fas"))
+        x<- read.fas(file.path(dir1,gun,jun,"Sequence.fas"))
         
         xi <- data.frame(x@sequence)
         
@@ -268,7 +271,7 @@ hap_phe2 <- function(gene_infile, pheno_file, select_cri, dir){
         
         colnames(var_pheno) <- c("A2","A1","A3")
         
-        var_pheno <-var_pheno %>% select(order(colnames(var_pheno)))
+        var_pheno <-var_pheno %>% dplyr::select(order(colnames(var_pheno)))
         
         cnam2 <- colnames(c)[-1]
         
@@ -288,15 +291,15 @@ hap_phe2 <- function(gene_infile, pheno_file, select_cri, dir){
         
         #genotype$`row.names(genotype)`[1]<-""
         
-        write.csv(haploy[,-c(4)],file.path(dir,gun,jun,"Haplotype.csv"))
+        write.csv(haploy[,-c(4)],file.path(dir1,gun,jun,"Haplotype.csv"))
         
-        write.csv(var_pheno,file.path(dir,gun,jun,"Variety.csv"))
+        write.csv(var_pheno,file.path(dir1,gun,jun,"Variety.csv"))
         
-        write.table(genotype,file.path(dir,gun,jun,"Flapjack.genotype"),sep="\t", quote = F,row.names = F,col.names = F)
+        write.table(genotype,file.path(dir1,gun,jun,"Flapjack.genotype"),sep="\t", quote = F,row.names = F,col.names = F)
         
         hig<-str_remove(z,"/genes")
         
-        pheno<- read.csv(paste0(dir,"/",gun,"/pheno.csv"),header = T)
+        pheno<- read.csv(paste0(dir1,"/",gun,"/pheno.csv"),header = T)
         
         pheno <- subset(pheno, !is.na(pheno[,2]))
         
@@ -306,11 +309,13 @@ hap_phe2 <- function(gene_infile, pheno_file, select_cri, dir){
         
         haplopheno <- merge(var_pheno, pheno, by.x = 'ASSAY.ID', by.y = 'Designation')
         
-        haplopheno$group<- as.factor(haplopheno$group)
+        # haplopheno$group<- as.factor(haplopheno$group)
+        
+        haplopheno$group<- as.character(haplopheno$group)
         
         haplopheno<-haplopheno[order (haplopheno$group),]
         
-        hp <- count(haplopheno$group)
+        hp <- plyr::count(haplopheno$group)
         
         hp <- hp[!(hp$freq <3),]
         
@@ -318,7 +323,7 @@ hap_phe2 <- function(gene_infile, pheno_file, select_cri, dir){
         {
           sd<- merge(hp,haplopheno, by.x = 'x', by.y = 'group')
           
-          sd<- sd  %>% select(1,ncol(sd))
+          sd<- sd  %>% dplyr::select(1,ncol(sd))
           
           colu<- colnames(sd)
           
@@ -328,7 +333,7 @@ hap_phe2 <- function(gene_infile, pheno_file, select_cri, dir){
           
           sd<- subset(sd, !is.na(sd[,2]))
           
-          sink(file.path(dir,gun,jun,"anova.txt"))
+          sink(file.path(dir1,gun,jun,"anova.txt"))
           
           aooov<- aov(formula((paste0(colnames(sd)[2], "~", colnames(sd)[1]))), data = sd)
           
@@ -337,18 +342,18 @@ hap_phe2 <- function(gene_infile, pheno_file, select_cri, dir){
           sink()
           
           if( sum(aooov$effects) == 0){
-            sink(file.path(dir,gun,jun, "no_anova.txt"))
+            sink(file.path(dir1,gun,jun, "no_anova.txt"))
             print(" no duncan test can be performed contrasts can be applied only to factors with 2 or more levels")
             sink()
             gcc<-"NA"
           }
           else {
             
-            sink(file.path(dir,gun,jun,"duncan.txt"))
+            sink(file.path(dir1,gun,jun,"duncan.txt"))
             print(duncan<- duncan.multiple(aooov,trt = "Haplotype",console = TRUE, group = T))
             sink()
             
-            sink(file.path(dir,gun,jun,"duncan_pval.txt"))
+            sink(file.path(dir1,gun,jun,"duncan_pval.txt"))
             
             print(duncan.pval<- duncan.multiple(aooov,trt = "Haplotype",console = TRUE, group = F))
             
@@ -358,7 +363,7 @@ hap_phe2 <- function(gene_infile, pheno_file, select_cri, dir){
             
             #summary<- cbind(hp,summary)
             
-            write.csv(summary,file.path(dir,gun,jun,"summary.stat.csv"))
+            write.csv(summary,file.path(dir1,gun,jun,"summary.stat.csv"))
             
             labels <- data.frame(duncan$groups)
             
@@ -372,7 +377,7 @@ hap_phe2 <- function(gene_infile, pheno_file, select_cri, dir){
             
             mycolors = c(brewer.pal(name="BuGn", n = 9), brewer.pal(name="OrRd", n = 9),brewer.pal(name = "YlOrBr", n=9),brewer.pal(name = "Pastel1",n=9))
             
-            jpeg(file.path(dir,gun,jun,"boxplot.jpg"), height = 1200,width = 1400, res = 300)
+            jpeg(file.path(dir1,gun,jun,"boxplot.jpg"), height = 1200,width = 1400, res = 300)
             
             p<-ggplot(sd, aes(x=Haplotype, y=sd[,2])) +labs(y=paste0(colnames(sd)[2]))+ geom_boxplot(aes(fill = factor(Haplotype)), show.legend = F)+scale_color_manual(values = mycolors, aesthetics = "fill")+ theme(axis.text.x = element_text(angle = 90, hjust= 1.0))
             
@@ -402,9 +407,9 @@ hap_phe2 <- function(gene_infile, pheno_file, select_cri, dir){
             
             colnames(variety_pop)[1] <- "Designation"
             
-            write.csv(variety_pop,file.path(dir,gun,jun,"variety_subset.csv"),row.names = F)
+            write.csv(variety_pop,file.path(dir1,gun,jun,"variety_subset.csv"),row.names = F)
             
-            count <- count(haplopheno$group)
+            count <- plyr::count(haplopheno$group)
             
             colnames(count)<- c("x", "count_pop")
             
@@ -418,7 +423,7 @@ hap_phe2 <- function(gene_infile, pheno_file, select_cri, dir){
             
             colnames(haplotype_pop)[1:2] <- c("Haplotype",gsub("X","",colnames(haplotype_pop)[2]))
             
-            write.csv(haplotype_pop,file.path(dir,gun,jun,"haplotype_subset.csv"),row.names = F)
+            write.csv(haplotype_pop,file.path(dir1,gun,jun,"haplotype_subset.csv"),row.names = F)
             
             gcc<- "all"
             
@@ -427,7 +432,7 @@ hap_phe2 <- function(gene_infile, pheno_file, select_cri, dir){
         }  
         
         else {
-          sink(file.path(dir,gun,jun,"no_anova.txt"))
+          sink(file.path(dir1,gun,jun,"no_anova.txt"))
           print(" no duncan test can be performed contrasts can be applied only to factors with 2 or more levels")
           sink()
           gcc<- "NA"
@@ -468,7 +473,7 @@ hap_phe2 <- function(gene_infile, pheno_file, select_cri, dir){
         #dir.create(paste0(snpfile,""))
         
         #sink(file.path((paste0(snpfile,"")), "Sequence.fas"))
-        sink(file.path(dir,gun,jun,"Sequence.fas"))
+        sink(file.path(dir1,gun,jun,"Sequence.fas"))
         
         for (j in 1:nrow(e)){
           name = paste0(">",e[j,1])
@@ -512,17 +517,17 @@ hap_phe2 <- function(gene_infile, pheno_file, select_cri, dir){
         
         #variety<- merge(variety,c, by.x = 'e...1.1.',by.y = 'ASSAY.ID')
         
-        write.csv(haplo,file.path(dir,gun,jun,"Haplotype.csv"))
+        write.csv(haplo,file.path(dir1,gun,jun,"Haplotype.csv"))
         
-        write.csv(variety,file.path(dir,gun,jun,"Variety.csv"))
+        write.csv(variety,file.path(dir1,gun,jun,"Variety.csv"))
         
-        write.table(genotype,file.path(dir,gun,jun,"Flapjack.genotype"),sep="\t", quote = F,row.names = F,col.names = F)
+        write.table(genotype,file.path(dir1,gun,jun,"Flapjack.genotype"),sep="\t", quote = F,row.names = F,col.names = F)
         
         #hig<-str_remove(z,"/genes")
         
         hig<-str_remove(z,"/genes")
         
-        pheno<- read.csv(paste0(dir,"/",gun,"/","pheno.csv"),header = T)
+        pheno<- read.csv(paste0(dir1,"/",gun,"/","pheno.csv"),header = T)
         
         pheno <- subset(pheno, !is.na(pheno[,2]))
         
@@ -532,11 +537,13 @@ hap_phe2 <- function(gene_infile, pheno_file, select_cri, dir){
         
         haplopheno <- merge(var_pheno, pheno, by.x = 'Accession', by.y = 'Designation')
         
-        haplopheno$group<- as.factor(haplopheno$group)
+        # haplopheno$group<- as.factor(haplopheno$group)
+        
+        haplopheno$group<- as.character(haplopheno$group)
         
         haplopheno<-haplopheno[order (haplopheno$group),]
         
-        hp <- count(haplopheno$group)
+        hp <- plyr::count(haplopheno$group)
         
         hp <- hp[!(hp$freq <3),]
         
@@ -544,7 +551,7 @@ hap_phe2 <- function(gene_infile, pheno_file, select_cri, dir){
         {
           sd<- merge(hp,haplopheno, by.x = 'x', by.y = 'group')
           
-          sd<- sd  %>% select(1,ncol(sd))
+          sd<- sd  %>% dplyr::select(1,ncol(sd))
           
           colu<- colnames(sd)
           
@@ -554,7 +561,7 @@ hap_phe2 <- function(gene_infile, pheno_file, select_cri, dir){
           
           sd<- subset(sd, !is.na(sd[,2]))
           
-          sink(file.path(dir,gun,jun,"anova.txt"))
+          sink(file.path(dir1,gun,jun,"anova.txt"))
           
           aooov<- lm(formula((paste0(colnames(sd)[2], "~", colnames(sd)[1]))), data = sd)
           
@@ -563,20 +570,20 @@ hap_phe2 <- function(gene_infile, pheno_file, select_cri, dir){
           sink()
           
           if( sum(aooov$effects) == 0){
-            sink(file.path(dir,gun,jun, "no_anova.txt"))
+            sink(file.path(dir1,gun,jun, "no_anova.txt"))
             print(" no duncan test can be performed contrasts can be applied only to factors with 2 or more levels")
             sink()
             gcc<-"NA"
           }
           else {
             
-            sink(file.path(dir,gun,jun,"duncan.txt"))
+            sink(file.path(dir1,gun,jun,"duncan.txt"))
             
             print(duncan<- duncan.multiple(aooov,trt = "Haplotype",console = FALSE, group = TRUE,main = TRUE))
             
             sink()
             
-            sink(file.path(dir,gun,jun,"duncan_pval.txt"))
+            sink(file.path(dir1,gun,jun,"duncan_pval.txt"))
             
             print(duncan.pval<- duncan.multiple(aooov,trt = "Haplotype",console = TRUE, group = F))
             
@@ -586,7 +593,7 @@ hap_phe2 <- function(gene_infile, pheno_file, select_cri, dir){
             
             #summary<- cbind(hp,summary)
             
-            write.csv(summary,file.path(dir,gun,jun,"summary.stat.csv"))
+            write.csv(summary,file.path(dir1,gun,jun,"summary.stat.csv"))
             
             labels <- data.frame(duncan$groups)
             
@@ -600,7 +607,7 @@ hap_phe2 <- function(gene_infile, pheno_file, select_cri, dir){
             
             mycolors = c(brewer.pal(name="BuGn", n = 9), brewer.pal(name="OrRd", n = 9),brewer.pal(name = "YlOrBr", n=9),brewer.pal(name = "Pastel1",n=9),brewer.pal(name = "Set1",n=9),brewer.pal(name="BuGn", n = 9), brewer.pal(name="OrRd", n = 9),brewer.pal(name = "YlOrBr", n=9),brewer.pal(name = "Pastel1",n=9),brewer.pal(name = "Set1",n=9))
             
-            jpeg(file.path(dir,gun,jun,"boxplot.jpg"), height = 1200,width = 1400, res = 300)
+            jpeg(file.path(dir1,gun,jun,"boxplot.jpg"), height = 1200,width = 1400, res = 300)
             
             p<-ggplot(sd, aes(x=Haplotype, y=sd[,2])) +labs(y=paste0(colnames(sd)[2]))+ geom_boxplot(aes(fill = factor(Haplotype)), show.legend = F)+scale_color_manual(values = mycolors, aesthetics = "fill")+ theme(axis.text.x = element_text(angle = 90, hjust= 1.0))
             
@@ -630,9 +637,9 @@ hap_phe2 <- function(gene_infile, pheno_file, select_cri, dir){
             
             colnames(variety_pop)[1] <- "Designation"
             
-            write.csv(variety_pop,file.path(dir,gun,jun,"variety_subset.csv"),row.names = F)
+            write.csv(variety_pop,file.path(dir1,gun,jun,"variety_subset.csv"),row.names = F)
             
-            count <- count(haplopheno$group)
+            count <- plyr::count(haplopheno$group)
             
             colnames(count)<- c("x", "count_pop")
             
@@ -644,13 +651,13 @@ hap_phe2 <- function(gene_infile, pheno_file, select_cri, dir){
             
             colnames(haplotype_pop)[1] <- c("Haplotype")
             
-            write.csv(haplotype_pop,file.path(dir,gun,jun,"haplotype_subset.csv"),row.names = F)
+            write.csv(haplotype_pop,file.path(dir1,gun,jun,"haplotype_subset.csv"),row.names = F)
             gcc<- "all"
           }
         }
         
         else {
-          sink(file.path(dir,gun,jun,"no_anova.txt"))
+          sink(file.path(dir1,gun,jun,"no_anova.txt"))
           print(" no duncan test can be performed contrasts can be applied only to factors with 2 or more levels")
           sink()
           gcc<- "NA"
@@ -704,7 +711,7 @@ hap_phe2 <- function(gene_infile, pheno_file, select_cri, dir){
           fhi$meanSH <- round(pun1[,1],digits = 2)
         }
         donors <- rbind(donors,fhi)
-        write.csv(donors, file.path(dir,gun,jun,paste0(gun,"_donors.csv")), 
+        write.csv(donors, file.path(dir1,gun,jun,paste0(gun,"_donors.csv")), 
                   row.names = F)
       }
       else {
@@ -734,7 +741,7 @@ hap_phe2 <- function(gene_infile, pheno_file, select_cri, dir){
   }
   colnames(sup.hap) <- c("LOC_ID","SH","Other.haps")
   
-  write.csv(sup.hap,file = file.path(dir,"superior_haplotypes.csv"),
+  write.csv(sup.hap,file = file.path(dir1,"superior_haplotypes.csv"),
             row.names = F)
   
   return(sup.hap)

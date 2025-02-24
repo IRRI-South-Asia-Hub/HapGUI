@@ -1,5 +1,10 @@
-func_piechart <- function(gene_infile,pheno_file, dir) {
+func_piechart <- function(gene_infile,pheno_file, dir1) {
 
+  dir1 <- file.path(getwd(), "Haplopheno")
+  if (!dir.exists(dir1)) {
+    dir.create(dir1, recursive = TRUE)
+  }
+  
   genes1<- read.csv(gene_infile, header = T)
   colnames(genes1) <- "V1"
   genes <- genes1$V1
@@ -14,7 +19,7 @@ func_piechart <- function(gene_infile,pheno_file, dir) {
     for (jun in colm) {
 
       print(colm)
-      haplo_P <- file.path(dir,gun,jun)
+      haplo_P <- file.path(dir1,gun,jun)
       z <- haplo_P
       setwd(paste0(z))
       
