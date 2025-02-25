@@ -6,6 +6,8 @@ qc_linux <- function(choice_geno,phefile,ip_dir, theme_cus) {
   system(paste0(ip_dir, "/plink2 --vcf marker.vcf --freq --out marker"))
   system("bcftools annotate --set-id '%CHROM\\_%POS' -o marker_updated.vcf marker.vcf")
   system(paste0(ip_dir, "/plink2 --vcf marker.vcf --pca --read-freq marker.afreq --out pca"))
+  # system(paste0(ip_dir, "/plink2 --vcf marker.vcf --make-bed --out ", dir, "/marker_etgwas"))
+  
 
   
   mar <- read.delim2("marker.hmp.txt", header = FALSE)
