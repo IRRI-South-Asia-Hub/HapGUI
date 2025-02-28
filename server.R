@@ -1,5 +1,5 @@
 server <- function(input, output, session) {
-  
+
   theme_cus <-theme(panel.background = element_blank(),panel.border=element_rect(fill=NA),
                     panel.grid.major = element_blank(),panel.grid.minor = element_blank(),
                     strip.background=element_blank(),
@@ -81,7 +81,7 @@ server <- function(input, output, session) {
   
   observeEvent(trait(),{
     req(trait())
-
+    
     updateSelectInput(session,"Acc", choices = names(trait()))
     updateSelectInput(session,"Envir1",choices = c("None" = "", names(trait())))
     updateSelectInput(session,"Envir2",choices = c("None" = "", names(trait())))
@@ -95,7 +95,7 @@ server <- function(input, output, session) {
     input_colnames = names(trait())
     envir1 = unique(trait()[[input$Envir1]])
     envir2 = unique(trait()[[input$Envir2]])
-
+    
     unit1 = unique(trait()[[input$Unit1]])
     unit2 = unique(trait()[[input$Unit2]])
     
@@ -107,7 +107,7 @@ server <- function(input, output, session) {
     
     updateSelectInput(session,"Unit1_list",choices = append("None",unit1))
     updateSelectInput(session,"Unit2_list",choices = append("None",unit2))
-   
+    
     #update violin tab
     updateSelectInput(session,"trait_violin",
                       choices = c("None", names(trait())),selected = "None")
@@ -162,7 +162,7 @@ server <- function(input, output, session) {
     if (input$choose_analysis == "option1") {
       trait_d = trait()
       names(trait_d)[which(names(trait_d)== input$Acc)] <- c ("Name")
-
+      
       if (!is.null(input$trait)){
         trait_d$phenotype <- trait_d[[input$trait]]
       }
@@ -197,7 +197,7 @@ server <- function(input, output, session) {
       if (!is.null(input$trait)){
         trait_d$phenotype <- trait_d[[input$trait]]
       }
-     
+      
       if (!is.null(input$trait_violin)) {
         trait_d$phenotype_violin <- trait_d[[input$trait_violin]]
       }
@@ -235,7 +235,7 @@ server <- function(input, output, session) {
     if(!is.null(input$Unit2_list) & input$Unit2_list != "None"){
       pheno_d2 <- pheno_d2[as.character(pheno_d2[[input$Unit2]]) == input$Unit2_list, ]
     }
-
+    
     p1 <- ggplot(data= pheno_d2, aes(phenotype)) + theme_bw() +
       theme(axis.line = element_line(size=1, colour = "black"),
             panel.grid = element_blank(), panel.border = element_blank(),
@@ -281,7 +281,7 @@ server <- function(input, output, session) {
   violin_others <- reactive({
     req(data(),input$violin_based)
     pheno_d2 = data()
-  
+    
     p2 <- ggplot(pheno_d2, aes(x = as.factor(pheno_d2[[input$violin_based]]),
                                y = pheno_d2$phenotype_violin,
                                fill = factor(pheno_d2[[input$violin_based]]))) + 
@@ -309,13 +309,13 @@ server <- function(input, output, session) {
   #barplot
   bar = reactive({
     req(data())
-  
+    
     df <- data_summary(data(), varname="phenotype_bar",
                        groupnames="sub")
     
     colnames(df) <- c("sub","phenotype","sd")
     print("summary table")
-
+    
     p3 <- ggplot(df, aes(x = sub,y=phenotype, fill=sub)) +
       geom_bar(stat="identity", color="black",
                position=position_dodge()) +
@@ -348,13 +348,13 @@ server <- function(input, output, session) {
                        groupnames=input$bar_based)
     
     colnames(df) =c(input$bar_based,"phenotype","sd")
-
+    
     p3 <- ggplot(df, aes(x = df[[input$bar_based]],y=phenotype, 
                          fill = factor(df[[input$bar_based]]))) +
-        geom_bar(stat="identity", color="black",
-                 position=position_dodge()) +
-        geom_errorbar(aes(ymin=phenotype-sd, ymax=phenotype+sd), width=.2,
-                      position=position_dodge(.9)) + theme_cus + 
+      geom_bar(stat="identity", color="black",
+               position=position_dodge()) +
+      geom_errorbar(aes(ymin=phenotype-sd, ymax=phenotype+sd), width=.2,
+                    position=position_dodge(.9)) + theme_cus + 
       ylab(input$trait_bar)+ scale_fill_discrete(name = input$bar_based) +
       xlab("")
     
@@ -365,7 +365,7 @@ server <- function(input, output, session) {
     req(input$plt_bn, input$bar_based)
     bar_others()
   })
-
+  
   output$other_bar_dw = downloadHandler(
     filename = function(){
       paste0(input$trait_bar,"_",input$bar_based,"_barplot.png")
@@ -444,7 +444,7 @@ server <- function(input, output, session) {
     print(head(aa))
     reshaped_data <- aa %>%
       unite("Combined", names(aa)[1:(ncol(aa) - 2)], sep = "_")
-
+    
     print(head(reshaped_data))
     
     df <- reshaped_data %>% spread(key = Combined, value = input$corr_trait)
@@ -498,7 +498,7 @@ server <- function(input, output, session) {
                               id.vars = c("Name")))
     print(head(melted_data))
     summary_stats <- melted_data[,mysummary(value),
-                                               by=.(variable)]
+                                 by=.(variable)]
     print(summary_stats)
     setnames(summary_stats, "variable", "Trait")
     return(summary_stats)
@@ -515,7 +515,7 @@ server <- function(input, output, session) {
     melted_data <- setDT(melt(setDT(column_data),
                               id.vars=selected_cols))
     summary_stats <- melted_data[, mysummary(value), 
-                                                 by=c("variable", selected_cols)]
+                                 by=c("variable", selected_cols)]
     
     setnames(summary_stats, "variable", "Trait")
     return(summary_stats)
@@ -599,7 +599,7 @@ server <- function(input, output, session) {
     #prepare terms for BLUP calc
     acc_group <- d[["Name"]]
     block = d[[input$block2]]
-
+    
     l = list()
     for (i in input$non_trait){
       model<-lmer(d[[i]]~(1|acc_group)+(1|block),data = d)
@@ -714,13 +714,14 @@ server <- function(input, output, session) {
       write.csv(GAV(),file)
     })
   
+
   #Genomic extract ----
   pheno_ingeno = reactive({
     req(input$geno_extract$datapath)
     a <- read.csv(input$geno_extract$datapath, header = T)
     return(a)
   })
-  
+
   output$geno_cond_ui <- renderUI({
     req(pheno_ingeno())
     if (input$choose_geno == "option2") {
@@ -733,19 +734,19 @@ server <- function(input, output, session) {
                     choices = c("None" = "", names(pheno_ingeno())))
       )}
   })
-  
+
   data_ingeno <- reactive({
-    req(input$geno_extract, pheno_ingeno(),input$run_extract) 
-    
+    req(input$geno_extract, pheno_ingeno(),input$run_extract)
+
     phe = pheno_ingeno()
     out1 <- phe[, c(1, 1)]
     write.table(out1, file = "id.txt", col.names = FALSE, row.names = FALSE, quote = FALSE)
-    
+
     # Switch logic based on condition
     if (input$choose_geno == "option1") {
       colnames(phe) <- c("ID", "trait")
       phe$ID <- gsub(pattern = "IRIS ", replacement = "IRIS_", phe$ID)
-      
+
       pop <- read.delim(subpop, header = TRUE)
       colnames(pop) <- c("ID", "sub")
       comb_phe <- merge(phe, pop, by = "ID", all.x = TRUE)
@@ -760,28 +761,31 @@ server <- function(input, output, session) {
     #comb_phe should have 3 columns: accessions, phenotypic value, sub
     return(comb_phe)
   })
-  
+
   observeEvent(input$run_extract, {
     showModal(modalDialog(h4("Genotypic data is being extracted")))
     req(data_ingeno())
     phefile = data_ingeno()
-    
+
+    # gff_path <- NULL
+
     if (input$choose_geno == "option1") {
       genofile <- "marker_main"
-      #gff_path = "Oryza_sativa.IRGSP-1.0.60.gff3"
-      gff_path = "demo_rice.gff3"
-      system(paste0(ip_dir, "/plink2 --bfile ", genofile, 
+      gff_path = paste0(dir,"/Oryza_sativa.IRGSP-1.0.60.gff3")
+      genome_name <- sub(".*/([^./]+)\\..*", "\\1", gff_path)
+      system(paste0(ip_dir, "/plink2 --bfile ", genofile,
                     " --keep id.txt --export vcf --out marker"))
       system(paste0(ip_dir, "/plink2 --bfile ", genofile, 
                     " --keep id.txt --make-bed --out marker_etgwas"))
-      
+
     } else if (input$choose_geno == "option2" && !is.null(input$geno_vcf)) {
       #vcf_path <- input$vcf_file$datapath
       print("pringting GFF...")
-      
+      req(input$gff_file$datapath)
       gff_path <- input$gff_file$datapath
       print(gff_path)
       print(head(gff_path))
+      genome_name <- sub(".*/([^./]+)\\..*", "\\1", gff_path)
       vcf <- read.vcfR(input$geno_vcf$datapath)
       print(head(vcf))
       sample_ids <- phefile$ID
@@ -790,36 +794,37 @@ server <- function(input, output, session) {
       if (length(matching_samples) == 0) {
         stop("No matching samples found between VCF and phenotype file.")
       }
-      
+
       vcf_fix <- as.data.table(vcf@fix)
-      vcf_fix$ID <- ifelse(vcf_fix$ID == ".", 
+      vcf_fix$ID <- ifelse(vcf_fix$ID == ".",
                            paste0(vcf_fix$CHROM, "_", vcf_fix$POS), vcf_fix$ID)
       vcf@fix <- as.matrix(vcf_fix)
       vcf_subset <- vcf[, c("FORMAT", matching_samples)]
       write.vcf(vcf_subset, file = "marker.vcf")
       system(paste0(ip_dir, "/plink2 --vcf marker.vcf --export vcf --out marker"))
-      system(paste0(ip_dir, "/plink2 --vcf marker.vcf --make-bed --out marker_etgwas"))
+      system(paste0(ip_dir, "/plink2 --vcf marker.vcf --export vcf --out marker"))
+      system(paste0(ip_dir, "/plink2 --vcf marker.vcf --make-bed --out marker_etgwas --double-id"))
     }
-    
+
     choice_geno = input$choose_geno
     marker <- qc_linux(choice_geno,phefile = phefile,ip_dir = ip_dir, theme_cus)
     
-    annotation_result <- vcf_annotation("marker.vcf", gff_path, 
-                                        output_dir="snpsift")
-    
+    # genome_name <- paste0(sub("\\..*", "", gff_path))
+
+    annotation_result <- vcf_annotation("marker.vcf", gff_path,
+                                        annpath, genome_name)
+
     removeModal()
-    
-    file.remove("marker.hmp.txt")
-    file.remove("marker.vcf")
+
     output$pca_plot <- renderImage({
       list(
-        src = "pca_plot_2D.png",
+        src = file.path(dir, "pca_plot_2D.png"),
         contentType = 'image/png',
         width = 500, height = 400,
         alt = "PCA plot"
       )
     }, deleteFile = FALSE)
-    
+
     output$plot_down <- downloadHandler(
       filename <- function() {
         paste("pca", "png", sep=".")
@@ -829,79 +834,89 @@ server <- function(input, output, session) {
       },
       contentType = "image/png"
     )
-    
+
     output$pca_table <- renderTable({
-      read.csv("pca.csv") %>% head()
+      req(file.exists(file.path(dir,"pca.csv")))
+      read.csv(file.path(dir,"pca.csv")) %>% head()
     })
-    
+
     output$geno_table <- renderTable({
       head(marker)
     })
-    
+
     output$geno <- downloadHandler(
       filename = function() { "marker.csv" },
       content = function(file) { write.csv(marker, file, row.names = FALSE) }
     )
-    
+
     output$table_down <- downloadHandler(
       filename = function() { "pca.csv" },
       content = function(file) { file.copy("pca.csv", file) },
       contentType = "application/csv"
     )
-    
+
     output$anno_table <- renderTable({
-      req(file.exists("annotated_variants.csv"))
-      head(read.csv("annotated_variants.csv"), 10)
+      req(file.exists(file.path(dir,"annotated_variants.csv")))
+      head(read.csv(file.path(dir,"annotated_variants.csv")), 10)
     })
-    
+
     output$table_down <- downloadHandler(
       filename = function() { "annotated_variants.csv" },
       content = function(file) {
         file.copy("annotated_variants.csv", file)
       }
     )
+
   })
-  
+
   #GWAS tabs----
   output$analysis_started = renderPrint({
     req(input$runa)
     cat("analysis started","\n")
   })
-  
+
   plotData <- reactiveVal(NULL)
-  
-  observeEvent(input$runa, {  
+
+  observeEvent(input$runa, {
     req(input$gwasfile)
-    
+    methods_selected <- input$gwas_methods
     updateCheckboxGroupInput(session, "gwas_methods",
                              selected = c("mrMLM", "FASTmrMLM", "FASTmrEMMA",
                                           "ISIS EM-BLASSO", "pLARmEB"))
-    methods_selected <- input$gwas_methods
+
     phe = reactive({
-      phe <- read.csv(file = input$gwasfile$datapath,header = T) #file name  =  pheno.csv
-      
+      phe <- read.csv(file = input$gwasfile$datapath,header = T)
+      # if (input$choose_geno == "option1") {
+      #   phe <- phe
+      # } else if (input$choose_geno == "option2") {
+        phe <- phe[, 1:2]
+      # } else {
+      #   stop("Error: No GFF file provided!")
+      # }
       pnam <- c("X.Phenotype.",names(phe)[2]) #Change trait
       colnames(phe) <- pnam
       # phe$"X.Phenotype." <- gsub(pattern = "IRIS ",replacement = "IRIS_",
       #                            phe$"X.Phenotype.")
       return(phe)
     })
-    
+
     showModal( modalDialog(
       h4(paste0("GWAS for ",names(phe())[2],":")),
       footer=tagList(h3("running..."))
     ))
-    
+
     if (!dir.exists(file.path(dir, "GWAS_results"))) {
       dir.create(file.path(dir, "GWAS_results"))
     }
     write.csv(phe() ,file.path(dir,"GWAS_results",file = "pheno.csv"),row.names = F)
-    
-    pca <- read.csv("pca.csv", header = T)
-    pca1 <- pca[,c(1:(as.numeric(input$pca_obs)+1))]
+    pca <- read.csv(file.path(dir,"pca.csv"), header = T)
+    cn <- colnames(pca)
+    pca1 <- insertRows(pca, 1 , new = NA)
+    pca1[1,] <- cn
+    pca1[1,1] <- "<ID>"
+    # pca1 <- pca[,c(1:(as.numeric(input$pca_obs)+1))]
     colnames(pca1) <- "<PCA>"
     colnames(pca1)[2:ncol(pca1)] <- ""
-    pca1[1,1] <- "<ID>"
     write.csv(pca1, file = "pca_temp.csv", row.names = FALSE)
     # Run mrMLM with the selected methods
     result <- mrMLM(fileGen = file.path(dir,"marker.csv"),
@@ -913,58 +928,69 @@ server <- function(input, output, session) {
                     SelectVariable = 50, Bootstrap = FALSE,
                     Plotformat = "jpeg", dir = file.path(dir,"GWAS_results"),
                     RAM = 100, DrawPlot = TRUE)
+
     # ...
-    
-    
+
     #file sorting
     if(file.exists(file.path(dir,"GWAS_results","1_Final result.csv"))){
       removeModal()
-      
+
       showModal( modalDialog(
         h4(paste0("MTAs are identied and the file is present at: GWAS_results/1_Final result.csv")),
         footer=tagList(actionButton("ok_gwas","Proceed to download the files"))
       ))
-      
+
       observeEvent(input$ok_gwas, {
         removeModal()
       })
-      
+
       output$man <- renderImage({
-        outfile <- tempfile(fileext = '.jpeg')
-        list(src = file.path(dir,"GWAS_results","1_Manhattan plot.jpeg"),
-             contentType = 'image/jpeg',
-             width = "100%",
-             height = 350,
-             alt = "Manhattan Plot")
-      }, deleteFile = F)
-      
+        manhattan_path <- file.path(dir, "GWAS_results", "1_Manhattan plot.jpeg")
+
+        if (file.exists(manhattan_path)) {
+          list(src = manhattan_path,
+               contentType = 'image/jpeg',
+               width = "100%",
+               height = 350,
+               alt = "Manhattan Plot")
+        } else {
+          return(NULL)  # Avoid errors if the file doesn't exist
+        }
+      }, deleteFile = FALSE)
+
       output$QQ <- renderImage({
-        outfile <- tempfile(fileext = '.jpeg')
-        list(src = file.path(dir,"GWAS_results","1_qq plot.jpeg"),
-             contentType = 'image/jpeg',
-             width = 400,
-             height = 300,
-             alt = "QQ Plot")
-      }, deleteFile = F)
-      
+        qqplot_path <- file.path(dir, "GWAS_results", "1_qq plot.jpeg")
+
+        if (file.exists(qqplot_path)) {
+          list(src = qqplot_path,
+               contentType = 'image/jpeg',
+               width = 400,
+               height = 300,
+               alt = "QQ Plot")
+        } else {
+          return(NULL)
+        }
+      }, deleteFile = FALSE)
+
+
       #we are chaning the above to all rs ids even if they come once
       res <- read.csv(file = file.path(dir,"GWAS_results","1_Final result.csv"))
       out <- res[!duplicated(res$RS.),]
-      
+
       for (nr in c(1:nrow(out))) {
         out$Method[nr] <- toString(res$Method[res$RS.==out$RS.[nr]])
         out$QTN.effect[nr] <- mean(res$QTN.effect[res$RS.==out$RS.[nr]])
         out$r2....[nr] <- mean(res$r2....[res$RS.==out$RS.[nr]])
       }
-      
+
       candgene_ind <- out[,c(5,6)]
       write_csv(candgene_ind, file.path(dir, "GWAS_results/GWAS_pos.csv"))
       write.csv(out[,c(2:8)],file.path(dir,"GWAS_results/Identified_MTAs.csv"),row.names = F)       ##-------- download
-      
+
       output$result_table = renderTable({
         return(out)
       })
-      
+
       output$downloadData <- downloadHandler(                                     ### Download GWAS results in Zip
         filename <- function() {
           paste("GAS_output", "zip", sep=".")
@@ -976,15 +1002,16 @@ server <- function(input, output, session) {
         },
         contentType = "application/zip"
       )
-      
+
     }else{
       output$analysis_complete = renderText({
         print("....GWAS analysis started....")
       })
     }
   })
-  
+
   #Et-GWAS tabs----
+
   
   phe = reactive({
     phe <- read.csv(file = input$etgwas_pheno$datapath,header = T) #file name  =  pheno.csv
@@ -1070,16 +1097,40 @@ server <- function(input, output, session) {
     },
     contentType = "application/zip"
   )
+  
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   #Hap_pheno tabs----
   observeEvent(input$runhap, {
+
+    # Set gff_path based on user selection
+    if (input$choose_geno == "option1") {
+      gff_path <- paste0(dir, "/Oryza_sativa.IRGSP-1.0.60.gff3")  # Default GFF
+    } else if (input$choose_geno == "option2" && !is.null(input$gff_file)) {
+      gff_path <- input$gff_file$datapath  # User-provided GFF
+    } else {
+      stop("Error: No GFF file provided!")
+    }
     
     hap_path <- input$hapfile$datapath
     pos_path <- input$posfile$datapath
     ld_value <- input$LD
     select_criteria <- input$select_cri
-    df <- candidate_gene(pos_path, ld_value, gff_path)
     
+    if (input$choose_geno == "option1") {
+      dir <- getwd()
+      gff_path <- paste0(dir, "/Oryza_sativa.IRGSP-1.0.60.gff3")  # Default GFF
+    } else if (input$choose_geno == "option2" && !is.null(input$gff_file)) {
+      gff_path <- input$gff_file$datapath  # User-provided GFF
+    } else {
+      stop("Error: No GFF file provided!")
+    }
+    
+    df <- candidate_gene(input$posfile$datapath, input$LD, gff_path)
+
+
+    # # df <- candidate_gene(pos_path, ld_value, input$gff_file$datapath)
+    # df <- candidate_gene(pos_path, ld_value, gffpath)
+
     df <- as.data.frame(df)
     print(colnames(df))
     if (!"gene_id" %in% colnames(df)) {
@@ -1088,68 +1139,88 @@ server <- function(input, output, session) {
     df2 <- df[["gene_id"]]
     df2 <- as.data.frame(df2)
     write.csv(df2, file.path(dir, "locus.csv"), row.names = FALSE)
-    
+
     showModal( modalDialog(
       h4(paste0("Haplo-Pheno analysis for ",nrow(df2)," Candidate genes")),
       footer=tagList(h3("running..."))
     ))
-    
+
     dir1 <- file.path(getwd(), "Haplopheno")
     if (!dir.exists(dir1)) {
       dir.create(dir1, recursive = TRUE)
     }
+    # dir <- getwd()
     if(file.exists(file.path(dir,"locus.csv"))){
-      #reactive object supplied with a forigen function
+
+      pheno <- read.csv(input$hapfile$datapath, header = TRUE)
+      # pheno <- read.csv(hap_path, header = TRUE)
+      all_pheno <- pheno[, 1:2]
+      # if (input$choose_geno == "option1") {
+      #   all_pheno <- pheno
+      # } else if (input$choose_geno == "option2") {
+      #   if (ncol(pheno) < 2) {
+      #     stop("Error: External phenotype file must have at least 2 columns.")         ################
+      #   }
+      #   all_pheno <- pheno[, 1:2]  # This overwrites the file path!
+      # }
+
+      # reactive object supplied with a forigen function
       gene <- hap_phe2(gene_infile = file.path(dir,"locus.csv"),
-                       pheno_file = hap_path,
+                       all_pheno = all_pheno,
                        select_cri = select_criteria,
                        dir1 = dir1)
+
+      # gene <- hap_phe2(gene_infile = file.path(dir,"locus.csv"),
+      #                  all_pheno = all_pheno,
+      #                  select_cri = select_criteria,
+      #                  dir1 = dir1)
+
       func_piechart(gene_infile = file.path(dir,"locus.csv"),
-                    pheno_file = input$hapfile$datapath,dir)
+                    all_pheno = all_pheno,dir1 = dir1)
       removeModal()
     }
-    
+
     shap <- reactive({
       haplotype_file <- file.path(dir1, "superior_haplotypes.csv")
-      
+
       if (!file.exists(haplotype_file)) {
         return(data.frame(Message = "Error: Haplotype file not found"))
       }
-      
+
       rfile <- read.csv(haplotype_file)
       rfile <- rfile[(!is.na(rfile$SH) & rfile$SH != "no"),]
-      
+
       if (nrow(rfile) == 0) {
         return(data.frame(Message = "No superior haplotypes found"))
       }
       return(rfile)
     })
-    
+
     showModal(modalDialog(
       h4(paste0("Haplo-Pheno analysis for is complete")),
       footer=tagList(actionButton("ok","Proceed to download the files"))
     ))
-    
+
     observeEvent(input$ok, {
       removeModal()
     })
-    
+
     output$Genes_table <- renderTable({
       req(file.exists("genes.csv"))
       head(read.csv("genes.csv"), 10)
     })
-    
+
     output$table_down2 <- downloadHandler(
       filename = function() { "genes.csv" },
       content = function(file) {
         file.copy("genes.csv", file)
       }
     )
-    
+
     output$candtable = renderTable({
       head(df)
     })
-    
+
     output$canddw = downloadHandler(
       filename =  function(){
         "candidate_genes.csv"
@@ -1158,11 +1229,11 @@ server <- function(input, output, session) {
         write.csv(df,file)
       }
     )
-    
+
     output$haptab = renderTable({
       head(gene)
     })
-    
+
     output$hapdw = downloadHandler(
       file = function(){
         "superior_haplotype.csv"
@@ -1171,20 +1242,20 @@ server <- function(input, output, session) {
         write.csv(gene,file)
       }
     )
-    
+
     warning_text <- reactive({
       if(nrow(shap()) == 0) {
         return(paste("<span style=\"color:red\">There are no superior haplotypes found</span>"))
       }
     })
-    
+
     output$text1 <- renderText(warning_text())
-    
+
     updateSelectInput(session,"loc_id",choices = shap()[,1])
-    updateSelectInput(session,"season_pie",choices = names(season_loc())[2])
-    
+    # updateSelectInput(session,"season_pie",choices = names(season_loc())[2])
+
     values <- reactiveValues()
-    
+
     output$piechart <- renderImage({
       outfile <- tempfile(fileext = '.png')
       # Return a list containing the filename
@@ -1194,10 +1265,10 @@ server <- function(input, output, session) {
            height = 300,
            alt = "This is alternate text")
     }, deleteFile = TRUE)
-    
+
     output$donortab <- renderTable({
       req(input$loc_id, input$season_pie)
-      
+
       donor_file <- file.path(dir1, input$loc_id, input$season_pie, paste0(input$loc_id, "_donors.csv"))
       if (!file.exists(donor_file)) {
         return(data.frame(Message = "Error: Donor file not found"))
@@ -1209,8 +1280,8 @@ server <- function(input, output, session) {
       })
       return(head(values, 5))
     })
-    
-    
+
+
     output$downloadhapData <- downloadHandler(
       filename <- function() {
         paste("output", "zip", sep=".")
