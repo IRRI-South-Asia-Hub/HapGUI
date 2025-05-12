@@ -4,6 +4,7 @@ hap_phe2 <- function(gene_infile, all_pheno, select_cri, dir1){
   if (!dir.exists(dir1)) {
     dir.create(dir1, recursive = TRUE)
   }
+  # genes1<- read.csv(paste0(dir,"/",gene_infile), header = T)
   genes1<- read.csv(gene_infile, header = T)
 
   names(all_pheno)[1] <- "X.Phenotype."
@@ -172,7 +173,8 @@ hap_phe2 <- function(gene_infile, all_pheno, select_cri, dir1){
     dir.create(file.path(dir1,gun))
     colm <- colnames(all_pheno)
     colm<- colm[-1]
-    file_path <- paste0("snpsift/",paste0(gun,".csv"))
+    # file_path <- paste0(dir,"/snpsift/",paste0(gun,".csv"))
+    file_path <- paste0(dir,"/snpsift/",paste0(gun,".csv"))
 
     file.copy(from = file_path,to = paste0(dir1,"/",gun,"/",gun,".csv"))
 
@@ -394,7 +396,9 @@ hap_phe2 <- function(gene_infile, all_pheno, select_cri, dir1){
 
             dev.off()
 
-            var_pop <- gsub('_', ' ', var_pheno[,1])
+            # var_pop <- gsub('_', ' ', var_pheno[,1])
+            
+            var_pop <- gsub('_', '_', var_pheno[,1])
 
             variety_pop <- var_pheno
 
@@ -624,7 +628,9 @@ hap_phe2 <- function(gene_infile, all_pheno, select_cri, dir1){
 
             dev.off()
 
-            var_pop <- gsub('_', ' ', variety[,1])
+            # var_pop <- gsub('_', ' ', variety[,1])
+            
+            var_pop <- gsub('_', '_', variety[,1])
 
             variety_pop <- variety
 
@@ -714,6 +720,12 @@ hap_phe2 <- function(gene_infile, all_pheno, select_cri, dir1){
         donors <- rbind(donors,fhi)
         write.csv(donors, file.path(dir1,gun,jun,paste0(gun,"_donors.csv")),
                   row.names = F)
+
+
+        if (nrow(fhi) == 0) {
+          message(paste("No individuals found in haplotype group:", tuguu))
+        }
+
       }
       else {
         hf<- "no"
