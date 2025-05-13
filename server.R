@@ -207,7 +207,9 @@ server <- function(input, output, session) {
       }
       
       if(!is.null(input$category) & input$category != "None"){
-        names(trait_d)[which(names(trait_d)== input$category)] <- c ("sub")
+
+        names(trait_d)[which(names(trait_d)== input$category)] <- c ("subpop")
+
       }
       aa = trait_d
     }
@@ -244,7 +246,9 @@ server <- function(input, output, session) {
             #axis.text.y=element_text(colour="black", size = 12),
             axis.title=element_text(size=12,face = "bold",color ="black"),
             strip.text.x = element_text(size = 12, face="bold"))+
-      geom_histogram(data=pheno_d2,color="black", 
+
+      geom_histogram(data=pheno_d2,color="black", fill = "skyblue",
+
                      alpha = 0.5)  + xlab(input$trait) + ylab("Count")
     return(p1)
   })
@@ -638,7 +642,9 @@ server <- function(input, output, session) {
       names(d)[which(names(d)== input$Acc)] <- c ("Name")
       
       if(!is.null(input$category) & input$category != "None"){
-        names(d)[which(names(d)== input$category)] <- c ("sub")
+
+        names(d)[which(names(d)== input$category)] <- c ("subpop")
+
       }
       aas = d
     }                             
@@ -728,17 +734,35 @@ server <- function(input, output, session) {
       tagList(
         p("Please upload the genotypic files in VCF format, below:",
           style = "color: blue;"),
-        fileInput("geno_vcf", "Upload VCF File", accept = ".vcf"),
+
+        fileInput("geno_vcf", "Upload VCF File", accept = c(".vcf", ".vcf.gz")),
         fileInput("gff_file", "Upload GFF File", accept = ".gff3"),
         selectInput("category_geno","Choose category column",
                     choices = c("None" = "", names(pheno_ingeno())))
+        # selectInput("category", "Choose grouping column", choices = NULL, selected = NULL)
       )}
   })
+
+  ##-------- change
+  # observe({
+  #   req(pheno_ingeno())
+  #   phe <- pheno_ingeno()
+  #   extra_cols <- setdiff(colnames(phe), c("ID", "trait"))
+  #   
+  #   if (length(extra_cols) > 0) {
+  #     updateSelectInput(session, "category", choices = extra_cols)
+  #   } else {
+  #     updateSelectInput(session, "category", choices = NULL)
+  #   }
+  # })
+  #-------------
 
   data_ingeno <- reactive({
     req(input$geno_extract, pheno_ingeno(),input$run_extract)
 
     phe = pheno_ingeno()
+
+
     out1 <- phe[, c(1, 1)]
     write.table(out1, file = "id.txt", col.names = FALSE, row.names = FALSE, quote = FALSE)
 
@@ -746,17 +770,44 @@ server <- function(input, output, session) {
     if (input$choose_geno == "option1") {
       colnames(phe) <- c("ID", "trait")
       phe$ID <- gsub(pattern = "IRIS ", replacement = "IRIS_", phe$ID)
-
+      
       pop <- read.delim(subpop, header = TRUE)
-      colnames(pop) <- c("ID", "sub")
+      colnames(pop) <- c("ID", "subpop")
+      print("Merging phenotype with subpop...")
       comb_phe <- merge(phe, pop, by = "ID", all.x = TRUE)
-    } else {
+      # comb_phe <- phe   ####### change
+    } else if (input$choose_geno == "option2") {
+      
+      print("Column names before renaming:")
+      print(colnames(phe))
       colnames(phe)[1:2] <- c("ID", "trait")
-
-      if(!is.null(input$category) && input$category != "None"){
-        names(phe)[which(names(phe)== input$category_geno)] <- c ("sub")
+      
+      if (!is.null(input$category) && input$category != "None") {
+        print("Selected category from dropdown:")
+        print(input$category)
+        
+        if (input$category %in% colnames(phe)) {
+          colnames(phe)[which(colnames(phe) == input$category)] <- "subpop"
+        } else {
+          warning("Selected category column does not exist in phenotype file.")
+          phe$subpop <- "Unknown"
+        }
+      } else {
+        warning("No category selected. Using default 'Unknown'.")
+        phe$subpop <- "Unknown"
       }
-      comb_phe = phe
+      comb_phe <- phe
+      comb_phe$subpop <- factor(comb_phe$subpop)
+      
+      print("Final column names:")
+      print(colnames(phe))
+    }
+    
+    # })
+    
+  #   # Check if 'sub' column exists
+    if (!"subpop" %in% colnames(comb_phe)) {
+      stop("Error: 'subpop' column is missing in comb_p")
     }
     #comb_phe should have 3 columns: accessions, phenotypic value, sub
     return(comb_phe)
@@ -764,8 +815,12 @@ server <- function(input, output, session) {
 
   observeEvent(input$run_extract, {
     showModal(modalDialog(h4("Genotypic data is being extracted")))
-    req(data_ingeno())
+
+    # req(data_ingeno())
     phefile = data_ingeno()
+    
+    # phefile = comb_phe  # ERROR
+
 
     # gff_path <- NULL
 
@@ -801,7 +856,9 @@ server <- function(input, output, session) {
       vcf@fix <- as.matrix(vcf_fix)
       vcf_subset <- vcf[, c("FORMAT", matching_samples)]
       write.vcf(vcf_subset, file = "marker.vcf")
-      system(paste0(ip_dir, "/plink2 --vcf marker.vcf --export vcf --out marker"))
+
+      # system(paste0(ip_dir, "/plink2 --vcf marker.vcf --export vcf --out marker"))
+
       system(paste0(ip_dir, "/plink2 --vcf marker.vcf --export vcf --out marker"))
       system(paste0(ip_dir, "/plink2 --vcf marker.vcf --make-bed --out marker_etgwas --double-id"))
     }
@@ -812,7 +869,8 @@ server <- function(input, output, session) {
     # genome_name <- paste0(sub("\\..*", "", gff_path))
 
     annotation_result <- vcf_annotation("marker.vcf", gff_path,
-                                        annpath, genome_name)
+                                        ann_path, genome_name)
+
 
     removeModal()
 
@@ -1123,21 +1181,26 @@ server <- function(input, output, session) {
       gff_path <- input$gff_file$datapath  # User-provided GFF
     } else {
       stop("Error: No GFF file provided!")
-    }
-    
-    df <- candidate_gene(input$posfile$datapath, input$LD, gff_path)
+    } 
 
+    # df <- candidate_gene(input$posfile$datapath, input$LD, gff_path)
+    df <- candidate_gene(pos_path, ld_value, gff_path)
 
     # # df <- candidate_gene(pos_path, ld_value, input$gff_file$datapath)
     # df <- candidate_gene(pos_path, ld_value, gffpath)
 
-    df <- as.data.frame(df)
+    df <- as.data.frame(df)                                             ###############
     print(colnames(df))
     if (!"gene_id" %in% colnames(df)) {
       stop("Error: Column 'gene_id' not found in df.")
     }
-    df2 <- df[["gene_id"]]
-    df2 <- as.data.frame(df2)
+
+    # df2 <- df[["gene_id"]]
+    # df2 <- as.data.frame(df2)
+    df2 <- df %>%
+      dplyr::select(gene_id) %>%
+      dplyr::distinct()
+
     write.csv(df2, file.path(dir, "locus.csv"), row.names = FALSE)
 
     showModal( modalDialog(
@@ -1155,6 +1218,9 @@ server <- function(input, output, session) {
       pheno <- read.csv(input$hapfile$datapath, header = TRUE)
       # pheno <- read.csv(hap_path, header = TRUE)
       all_pheno <- pheno[, 1:2]
+
+      trait_dir <- colnames(all_pheno)[2] 
+
       # if (input$choose_geno == "option1") {
       #   all_pheno <- pheno
       # } else if (input$choose_geno == "option2") {
@@ -1170,13 +1236,22 @@ server <- function(input, output, session) {
                        select_cri = select_criteria,
                        dir1 = dir1)
 
-      # gene <- hap_phe2(gene_infile = file.path(dir,"locus.csv"),
-      #                  all_pheno = all_pheno,
-      #                  select_cri = select_criteria,
-      #                  dir1 = dir1)
 
-      func_piechart(gene_infile = file.path(dir,"locus.csv"),
-                    all_pheno = all_pheno,dir1 = dir1)
+      # func_piechart(gene_infile = file.path(dir,"locus.csv"),
+      #               all_pheno = all_pheno,dir1 = dir1)
+      
+      observeEvent(c(input$season_pie, input$loc_id), {
+        # req(input$season_pie, input$loc_id)
+        req(input$loc_id)
+        
+        func_piechart(
+          gene_infile = file.path(dir, "locus.csv"),
+          all_pheno = all_pheno,
+          dir1 = dir1
+        )
+      })
+      
+
       removeModal()
     }
 
@@ -1251,34 +1326,54 @@ server <- function(input, output, session) {
 
     output$text1 <- renderText(warning_text())
 
-    updateSelectInput(session,"loc_id",choices = shap()[,1])
-    # updateSelectInput(session,"season_pie",choices = names(season_loc())[2])
+    # updateSelectInput(session,"loc_id",choices = shap()[,1])
+    updateSelectInput(session,"loc_id",choices = list.dirs(dir1, recursive = FALSE, full.names = FALSE))
 
     values <- reactiveValues()
-
+    
+    # output$piechart <- renderImage({
+    #   # req(input$season_pie, input$loc_id)
+    #   req(input$loc_id)
+    #   
+    #   # img_path <- file.path(dir1, input$season_pie, input$loc_id, "hap_subset_diversity.png")
+    #   img_path <- file.path(dir1, input$loc_id, "hap_subset_diversity.png")
+    #   message("Looking for image at: ", img_path)
+    #   
+    #   if (file.exists(img_path)) {
+    #     list(
+    #       src = img_path,
+    #       contentType = 'image/png',
+    #       width = 400,
+    #       height = 300,
+    #       alt = "Haplotype frequency pie chart"
+    #     )
+    #   } else {
+    #     message("Image file not found at ", img_path)
+    #     return(NULL)
+    #   }
+    # }, deleteFile = FALSE)
+    
     output$piechart <- renderImage({
-      outfile <- tempfile(fileext = '.png')
-      # Return a list containing the filename
-      list(src = file.path(dir1,input$loc_id,input$season_pie,"hap_diversity.png"),
-           contentType = 'image/png',
-           width = 400,
-           height = 300,
-           alt = "This is alternate text")
-    }, deleteFile = TRUE)
+      req(input$loc_id)
+      # filename <- file.path(dir1, input$loc_id, input$season_pie, "hap_subset_diversity.png")
+      filename <- file.path(dir1, input$loc_id, trait_dir, "hap_subset_diversity.png")
+      print(paste("Trying to load:", filename))  # debug line
+      list(src = filename, contentType = 'image/png', width = 500, height = 500)
+    }, deleteFile = FALSE)
+    
+    
+    
 
     output$donortab <- renderTable({
-      req(input$loc_id, input$season_pie)
-
-      donor_file <- file.path(dir1, input$loc_id, input$season_pie, paste0(input$loc_id, "_donors.csv"))
+      # req(input$loc_id, input$season_pie)
+      req(input$loc_id)
+      # donor_file <- file.path(dir1, input$loc_id, input$season_pie, paste0(input$loc_id, "_donors.csv"))
+      donor_file <- file.path(dir1, input$loc_id, trait_dir, paste0(input$loc_id, "_donors.csv"))
       if (!file.exists(donor_file)) {
-        return(data.frame(Message = "Error: Donor file not found"))
+        return(data.frame(Message = "No donor file found for this locus."))
       }
-      values <- tryCatch({
-        read.csv(donor_file)
-      }, error = function(e) {
-        return(data.frame(Message = paste("Error reading donor file:", e$message)))
-      })
-      return(head(values, 5))
+      
+      read.csv(donor_file) %>% head(5)
     })
 
 

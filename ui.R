@@ -12,7 +12,11 @@ ui = fluidPage(tagList(
             font-weight: bold;
           }
         ")),
+<<<<<<< HEAD
       
+=======
+
+>>>>>>> 7715484 (Cleaned history and added final files)
       fluidRow(
         column(
           width = 12,
@@ -22,15 +26,24 @@ ui = fluidPage(tagList(
               style = "max-width: 800px; margin-bottom: 30px;",
               h3("Welcome to HapGUI", style = "text-align: center; color: #007bff;"),
               p(
+<<<<<<< HEAD
                 "HapGUI is a comprehensive platform designed to analyze and explore haplotype data from different germplasm sources. 
                   It allows researchers to gain insights into the genetic diversity and structure of rice populations, with a focus on 
+=======
+                "HapGUI is a comprehensive platform designed to analyze and explore haplotype data from different germplasm sources.
+                  It allows researchers to gain insights into the genetic diversity and structure of rice populations, with a focus on
+>>>>>>> 7715484 (Cleaned history and added final files)
                   both 3K-RICE and external datasets.",
                 style = "text-align: justify;"
               )
             ),
             # The styled box for choices
             div(
+<<<<<<< HEAD
               style = "border: 2px solid #ecf0f5; border-radius: 10px; padding: 30px; 
+=======
+              style = "border: 2px solid #ecf0f5; border-radius: 10px; padding: 30px;
+>>>>>>> 7715484 (Cleaned history and added final files)
                          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); background-color: #f8f9fa; width: 400px;",
               h4("Choose Germplasm"),
               radioButtons(
@@ -50,7 +63,11 @@ ui = fluidPage(tagList(
         )
       )
     ),
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> 7715484 (Cleaned history and added final files)
     #---plots and BLUPs----
     tabPanel("Phenotype Analysis",fluid = T,
              
@@ -152,7 +169,11 @@ ui = fluidPage(tagList(
                             verbatimTextOutput("anova_new"),
                    ),
                    
+<<<<<<< HEAD
                    tabPanel("BLUPs",
+=======
+                   tabPanel("BLUP",
+>>>>>>> 7715484 (Cleaned history and added final files)
                             h2("aug RCBD"),
                             tags$div(selectInput("BEnvir1_list", "Environment1", 
                                                  choices = NULL),
@@ -179,7 +200,12 @@ ui = fluidPage(tagList(
                    tabPanel("Genetic Parameters",
                             selectInput("block_gav","Choose blocks column",choices = NULL),
                             selectInput("treatment_gav","select treatment column",choices = NULL),
+<<<<<<< HEAD
                             checkboxGroupInput("traits_gav", "Select traits", choices = NULL),                            tableOutput("Gen_par"),
+=======
+                            checkboxGroupInput("traits_gav", "Select traits", choices = NULL),                            
+                            # tableOutput("Gen_par"),
+>>>>>>> 7715484 (Cleaned history and added final files)
                             tableOutput("Gen_par"),
                             downloadButton("Gen_dw","Download_table"),
                             #we are using index for blocks
@@ -187,21 +213,33 @@ ui = fluidPage(tagList(
                  )
                )
              )
+<<<<<<< HEAD
       ),
    
+=======
+    ),
+>>>>>>> 7715484 (Cleaned history and added final files)
     #Geno extract----
     tabPanel("Genofile Extract",fluid = T,
              sidebarLayout(
                sidebarPanel(
                  fileInput("geno_extract","Phenotypic file input:"),
                  radioButtons("choose_geno","Choose genotypic file",
+<<<<<<< HEAD
                               choices = list("Default" = "option1", 
+=======
+                              choices = list("Default" = "option1",
+>>>>>>> 7715484 (Cleaned history and added final files)
                                              "External" = "option2")),
                  tags$br(),
                  uiOutput("geno_cond_ui"),
                  actionButton("run_extract","Run extract")
                ),
+<<<<<<< HEAD
                
+=======
+
+>>>>>>> 7715484 (Cleaned history and added final files)
                mainPanel(
                  tabsetPanel(
                    tabPanel("Principle Components Analysis",fluid = T,
@@ -227,7 +265,11 @@ ui = fluidPage(tagList(
                )
              )
     ),
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> 7715484 (Cleaned history and added final files)
     # GWAS tab ----------------------------------------------------------------
     tabPanel("GWAS",fluid = T,
              sidebarLayout(
@@ -249,7 +291,11 @@ ui = fluidPage(tagList(
                             plotOutput("man"),
                             plotOutput("QQ")
                    ),
+<<<<<<< HEAD
                    
+=======
+
+>>>>>>> 7715484 (Cleaned history and added final files)
                    #----------MTAs
                    tabPanel("MTAs",fluid = T,
                             tableOutput("result_table"),
@@ -259,7 +305,11 @@ ui = fluidPage(tagList(
                )
              )
     ),
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> 7715484 (Cleaned history and added final files)
     # Et-GWAS tab ----
     tabPanel("Et-GWAS",fluid = T,
              sidebarLayout(
@@ -292,11 +342,20 @@ ui = fluidPage(tagList(
                sidebarPanel(
                  fileInput("hapfile","Phenotypic file input:"),
                  fileInput("posfile","MTA file input:"),
+<<<<<<< HEAD
                  numericInput("LD", "LD region", 25000,min = 1000, max = 250000),
                  radioButtons("select_cri", "Choose High/Low Value Haplotypes", 
                               choices = c("High", "Low")),
                  actionButton("runhap","Run Haplo-Pheno")
                  
+=======
+                 # fileInput("gff_file", "Upload GFF File", accept = ".gff3"),
+                 numericInput("LD", "LD region", 25000,min = 1000, max = 250000),
+                 radioButtons("select_cri", "Choose High/Low Value Haplotypes",
+                              choices = c("High", "Low")),
+                 actionButton("runhap","Run Haplo-Pheno")
+
+>>>>>>> 7715484 (Cleaned history and added final files)
                ),
                mainPanel(
                  tabsetPanel(
@@ -313,6 +372,7 @@ ui = fluidPage(tagList(
                             br(),
                             htmlOutput('text1'),
                             br(),
+<<<<<<< HEAD
                             fluidRow(
                               column(6,selectInput("loc_id","Choose Locus ID",
                                                    choices = NULL)),
@@ -321,14 +381,36 @@ ui = fluidPage(tagList(
                             fluidRow(
                               column(6,imageOutput("piechart")),
                               column(6,tableOutput("donortab"))),
+=======
+                            # fluidRow(
+                            #   column(6,selectInput("loc_id","Choose Locus ID",
+                            #                        choices = NULL)),
+                            #   column(6,selectInput("season_pie","Choose the season",
+                            #                        choices = NULL))),
+                            fluidRow(
+                            column(6, selectInput("loc_id", "Choose Locus ID", choices = NULL)),
+                            # column(6,selectInput("season_pie","Choose the season",choices = NULL))
+                            ),
+                            fluidRow(
+                              column(6,imageOutput("piechart")),
+                              column(6,tableOutput("donortab"))
+                              ),
+>>>>>>> 7715484 (Cleaned history and added final files)
                             downloadButton("downloadhapData")
                    ),
                  )
                )
              )
     )
+<<<<<<< HEAD
     
     
   )
 )
 )
+=======
+
+
+  )
+))
+>>>>>>> 7715484 (Cleaned history and added final files)
