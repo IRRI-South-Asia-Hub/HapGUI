@@ -1,4 +1,4 @@
-\# HapGUI
+**HapGUI**
 
 HapGUI is a user-friendly GUI tool for performing haplotype, GWAS, and
 haplo-pheno analysis designed to assist breeders, students, and
@@ -25,8 +25,8 @@ Before running HapGUI, ensure that Docker is installed on your system.
 Once Docker is installed, you can launch HapGUI by running the following
 commands **once** in your terminal:
 
-\`\`\`bash docker pull irrisah2012/hapgui:v1 docker run -d -p 3232:3232
-irrisah2012/hapgui:v1
+docker pull irrisah2012/hapgui:v1 
+docker run -d -p 3232:3232 irrisah2012/hapgui:v1
 
 ## 🌐 Access the HapGUI Interface
 
@@ -40,23 +40,25 @@ Once the container is running:
 
 ------------------------------------------------------------------------
 
+## 📂 User Manual
+ A user manual is available in the `tutorial/` folder of this repository for input file preparation (link). For running HapGUI please follow the Video Tutorial provided below.
+
+------------------------------------------------------------------------
+
 ## 📺 Video Tutorial
 
 A complete **video manual** is available to help you:
 
 - Install Docker
 - Run HapGUI in Docker
-- Use the HapGUI and access results for respective analysis
+- Use the HapGUI and access results for respective analysis ( Phenotype analysis, GWAS, Et-WAS, Haplopheno analysi)
 
-📂 Please find the video manual in the `tutorial/` folder of this
-repository for easy offline reference (link).
+Please find the video manual (link) of this repository for easy offline reference.
 
 ------------------------------------------------------------------------
-
 ## 🛠️ Support
 
 If you encounter any issues, please:
 
 - Open a GitHub issue
-  [here](https://github.com/irrisah2012/hapgui/issues)
-- Check the `FAQ` section in the tutorial folder
+  [here](https://github.com/IRRI-South-Asia-Hub/HapGUI/issues)
