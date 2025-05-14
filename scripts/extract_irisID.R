@@ -21,7 +21,7 @@ extract_irisID <- function(trait, infile, perc, dir, ip_dir){
   box_plot <- paste0(data_dir,trait,"_boxplot.png")
   
   phe <- read.csv(infile, header = T)
-
+  phe <- phe[,1:2]
   colnames(phe) <- c("Accessions","trait")
   # phe$Accessions <- gsub(pattern = "IRIS ",replacement = "IRIS_",
   #                       phe$Accessions)
@@ -51,7 +51,6 @@ extract_irisID <- function(trait, infile, perc, dir, ip_dir){
   remove(out)
   
   # pca_plink ---------------------------------------------------------------
-
   
   theme_cus <-theme(panel.background = element_blank(),panel.border=element_rect(fill=NA),
                     panel.grid.major = element_blank(),panel.grid.minor = element_blank(),
@@ -67,7 +66,6 @@ extract_irisID <- function(trait, infile, perc, dir, ip_dir){
                                                 face = "bold"),
                     legend.text = element_text(colour = "black", size = 12,),
                     legend.key = element_rect(fill = "white", color = NA))
-
   
   # pheno_dist_xp -----------------------------------------------------------
   # cat(green("Pheno_dist\n"))
@@ -80,7 +78,6 @@ extract_irisID <- function(trait, infile, perc, dir, ip_dir){
   # Initial distribution ----------------------------------------------------
   b <- read.delim(phenofile, header = T, sep = ",")
   b <- b[,1:2]
-
   names(b) <- c("Designation","phenotype")
   val <- ceiling((perc*nrow(b))/100)
   
@@ -145,9 +142,7 @@ extract_irisID <- function(trait, infile, perc, dir, ip_dir){
   
   system(paste0(ip_dir,"/plink2 --bfile ",data_dir,
                 infam," --keep ",low_in," --export ped --out ",low_out))
-
   
-
   system(paste0(ip_dir,"/plink2 --bfile ",data_dir,
                 infam," --keep ",rand_in," --export ped --out ",rand_out))
   
@@ -157,7 +152,6 @@ extract_irisID <- function(trait, infile, perc, dir, ip_dir){
   allele_file <- paste0(data_dir,trait,"_hmp_allele.txt")
   
   system(command = paste0(ip_dir, "/plink2 --bfile ",data_dir, infam," --freq --out et_marker"))
-
   
   system(paste0("bash scripts/pooling_snp.sh -h ",allele_file))
   
@@ -242,13 +236,12 @@ extract_irisID <- function(trait, infile, perc, dir, ip_dir){
   
   # Association -------------------------------------------------------------
   mapfile <- paste0(data_dir,infam,".map")
-
   
   outfile <- paste(data_dir,trait,"_intermediate_result",perc,".csv",sep = "")
   outqtls <- paste(data_dir,trait,"_qtls",perc,".csv",sep = "")
   outsnps <- paste(data_dir,trait,"_Final_result",perc,".csv",sep = "")
   outpos <- paste(data_dir,"/Et-GWAS","_pos_",trait,perc,".csv",sep = "")
-
+  
   input <- final
   input[is.na(input)]=0
   
@@ -279,9 +272,7 @@ extract_irisID <- function(trait, infile, perc, dir, ip_dir){
   
   b <- qval[,c(1:3,5)]
   names(b) <- c("SNP","Chromosome","Position","trait1")
-
   
-
   suggestiveline = (0.05/nrow(b))*nrow(phe)
   genomewideline = (0.01/nrow(b))*nrow(phe)
   
@@ -292,22 +283,18 @@ extract_irisID <- function(trait, infile, perc, dir, ip_dir){
          file="jpg",dpi=600,file.output=TRUE,verbose=TRUE,width=14,height=10)
   
   system(command = paste0("cp *",trait,"_",perc,".jpg ",data_dir,
-
                           trait,"_",perc,"Manhattan.jpg"))
   
   #xpplot_mine
   
   # Findign significant snps ------------------------------------------------
   
-
   qval$log10p <- -log10(qval$pval)
   SNPset <- qval
   suggestiveline = -log10((0.05/nrow(b))*nrow(phe))
   
   qtltable <- SNPset[SNPset$log10p >= suggestiveline,]
-
   
-
   write.csv(qtltable, file = outsnps, row.names = F)
   
   pos_file <- qtltable[,c(2,3)]

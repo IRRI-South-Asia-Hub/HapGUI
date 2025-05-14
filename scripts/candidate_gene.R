@@ -1,6 +1,5 @@
 candidate_gene <- function(pos_infile,ld, gff_file){
 
-
   res <- read.csv(pos_infile)
   colnames(res)[1:2] <- c("Chromosome", "Position")
   print(head(res))   
@@ -9,7 +8,6 @@ candidate_gene <- function(pos_infile,ld, gff_file){
   #add code for gff file
   gff <- read.table(gff_file, sep = "\t", quote = "", stringsAsFactors = FALSE)
   genes <- gff[gff$V3 == "gene", ]
-
   # g1 <- genes %>% separate(V9, into = c("key", "value"), sep = ";")
   # g1 <- g1[,-ncol(g1)]
   # g1 <- g1 %>% separate(key, into = c("key", "value"), sep = ":")
@@ -20,7 +18,6 @@ candidate_gene <- function(pos_infile,ld, gff_file){
   
   g1 <- g1[,!names(g1) %in% c("key","V2","V3","V6", "V8")]
   colnames(g1) <- c("Chromosome", "start", "stop", "strand", "gene_id")
-
 
   g1 <- g1 %>% distinct(gene_id, .keep_all = TRUE)
 
@@ -68,7 +65,6 @@ candidate_gene <- function(pos_infile,ld, gff_file){
     dplyr::distinct() %>%
     dplyr::rename(df2 = gene_id)
   write.csv(locus, "locus.csv", row.names = FALSE)
-
   
   return(candidates)
 }

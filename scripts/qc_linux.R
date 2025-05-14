@@ -1,7 +1,6 @@
 qc_linux <- function(choice_geno,phefile,ip_dir, theme_cus) {
   
   system(paste0(ip_dir, "/plink2 --vcf marker.vcf --maf 0.05 --export vcf --out marker"))
-
   system(paste0(ip_dir, "/tassel5/run_pipeline.pl -Xmx12g -fork1 -vcf marker.vcf -homozygous -export marker -exportType Hapmap -runfork1"))
   
   system(paste0(ip_dir, "/plink2 --vcf marker.vcf --freq --out marker"))
@@ -24,14 +23,11 @@ qc_linux <- function(choice_geno,phefile,ip_dir, theme_cus) {
   
   colnames(mar) <- c("rs#", "chrom", "pos", names2)
   mar <- mar[-1,]
-
   write.csv(mar, paste0(dir,"/marker.csv"), row.names = FALSE)
-
   
   colnames(pca1) <- c("ID", paste0("PC", 1:(ncol(pca1) - 1)))
   pca1 <- pca1[-c(1),]
   pca1[,2:11] <- lapply(pca1[,2:11], as.numeric)
-
   write.csv(pca1, file = paste0(dir,"/pca.csv"), row.names = FALSE)
   
   # comb_p <- merge(pca1, phefile, by = "ID")

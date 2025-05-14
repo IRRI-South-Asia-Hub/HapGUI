@@ -19,7 +19,6 @@ vcf_annotation <- function(vcf_file, gff_file, ann_path, genome=NULL) {
   
   # Read VCF and GFF files
   vcf_gr <- readVcf(vcf_file, genome = genome)
-
   gff <- read.table(gff_file, sep="\t", quote="")
 
   # Extract gene information from GFF
@@ -38,7 +37,7 @@ vcf_annotation <- function(vcf_file, gff_file, ann_path, genome=NULL) {
     mutate(Chromosome = ifelse(toupper(Chromosome) %in% names(roman_vals), 
                          as.character(roman_vals[toupper(Chromosome)]), 
                          Chromosome))
-
+     
   g11 <- g1[grepl("^[0-9]+(\\.[0-9]+)?$", g1$Chromosome), ]
   write.csv(g11,"genes.csv",row.names = F)
 
@@ -66,15 +65,12 @@ vcf_annotation <- function(vcf_file, gff_file, ann_path, genome=NULL) {
   annot_vcf <- read.vcfR("annotated_variants.vcf")
   annot_info <- as.data.frame(annot_vcf@fix)
   geno_data <- as.data.frame(annot_vcf@gt)
-
   vcf_fin <- cbind(annot_info, geno_data)
   write.csv(vcf_fin, "annotated_variants.csv", row.names = FALSE)
 
   # Convert VCF to Hapmap format with MAF filtering
-
   options(java.parameters = "-Xmx8G")
   tasObj <- readGenotypeTableFromPath(file.path(dir, "annotated_variants.vcf"))
-
   maf_vcfgr <- filterGenotypeTableSites(
     tasObj,
     siteMinCount = 0,
@@ -92,9 +88,7 @@ vcf_annotation <- function(vcf_file, gff_file, ann_path, genome=NULL) {
 
   func.hmp <- read.delim("marker.hmp.txt", header = TRUE)
 
-
   # Replace IUPAC codes with corresponding alleles
-
    func.hmp[func.hmp == "R"] <- "A/G"
    func.hmp[func.hmp == "Y"] <- "C/T"
    func.hmp[func.hmp == "S"] <- "G/C"
@@ -102,8 +96,6 @@ vcf_annotation <- function(vcf_file, gff_file, ann_path, genome=NULL) {
    func.hmp[func.hmp == "K"] <- "G/T"
    func.hmp[func.hmp == "M"] <- "A/C"
    func.hmp[func.hmp == "N"] <- "-"
-
-
 
    generate_genefiles <- function(chrom){
      chr <- chrom$Chromosome
@@ -117,7 +109,6 @@ vcf_annotation <- function(vcf_file, gff_file, ann_path, genome=NULL) {
      gene_snp <- data.frame(gene_snp[-1, ])
      colnames(gene_snp) <- scol
      locus <- gene_snp %>% dplyr::select(sort(colnames(gene_snp)))
-
      write.csv(locus, file = paste0(ann_path, "/",gene_id, ".csv"))
      return(gene_id)
    }
