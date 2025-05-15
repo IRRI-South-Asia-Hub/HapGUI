@@ -41,7 +41,7 @@ Once the container is running:
 ------------------------------------------------------------------------
 
 ## 📂 User Manual
- A user manual is available in the `tutorial/` folder of this repository for input file preparation (link). For running HapGUI please follow the Video Tutorial provided below.
+ A user manual is available in the `tutorial/` (https://github.com/IRRI-South-Asia-Hub/HapGUI/tree/final/tutorial) folder of this repository for input file preparation. For running HapGUI please follow the Video Tutorial provided below.
 
 ------------------------------------------------------------------------
 
@@ -51,7 +51,7 @@ A complete **video manual** is available to help you:
 
 - Install Docker
 - Run HapGUI in Docker
-- Use the HapGUI and access results for respective analysis ( Phenotype analysis, GWAS, Et-WAS, Haplopheno analysi)
+- Use the HapGUI and access results for respective analysis ( Phenotype analysis, GWAS, Et-WAS, Haplopheno analysis)
 
 Please find the video manual (link) of this repository for easy offline reference.
 
