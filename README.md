@@ -26,6 +26,7 @@ Once Docker is installed, you can launch HapGUI by running the following
 commands **once** in your terminal:
 
 docker pull irrisah2012/hapgui:v1 
+
 docker run -d -p 3232:3232 irrisah2012/hapgui:v1
 
 ## 🌐 Access the HapGUI Interface
