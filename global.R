@@ -1,8 +1,8 @@
-# setwd("/home/bandana/HapGUI")
-setwd("/home/bandana/Documents/HapGUI_package/final_apps/final/backup/HapGUI")
+setwd("/home/app")
+# setwd("/home/bandana/Documents/HapGUI_package/final_apps/final/backup/HapGUI")
 dir <- getwd()
 ip_dir <- "softwares"
-options(shiny.maxRequestSize = 2000*1024^2)
+options(shiny.maxRequestSize = 40000*1024^2)
 source("ui.R")
 source("server.R")
 
