@@ -57,14 +57,14 @@ ui = fluidPage(tagList(
              sidebarLayout(
                sidebarPanel(
                  
-                 fileInput("pheno","Upload phenotypic data",accept = ".csv"),
+                 fileInput("pheno","Upload phenotype file",accept = ".csv"),
                  
                  #selecting input coloumns
                  selectInput("Acc","Choose genotype column",choices = NULL),
                  selectInput("Envir1","Choose 1st environment",choices = c("None" = "")), 
                  selectInput("Envir2","Choose 2nd environment",choices = c("None" = "")),
-                 selectInput("Unit1","Choose 1st experiemental unit",choices = c("None" = "")), 
-                 selectInput("Unit2","Choose 2nd experiemental unit",choices = c("None" = "")),
+                 selectInput("Unit1","Choose 1st experimental unit",choices = c("None" = "")), 
+                 selectInput("Unit2","Choose 2nd experimental unit",choices = c("None" = "")),
                  
                  #adding conditional UI
                  uiOutput("cond_ui_pheno"),
@@ -232,8 +232,8 @@ ui = fluidPage(tagList(
     tabPanel("GWAS",fluid = T,
              sidebarLayout(
                sidebarPanel(
-                 fileInput("gwasfile","Phenotypic file input:"),
-                 numericInput("pca_obs", "Principal Componenets", 3, min = 0, max = 10),
+                 fileInput("gwasfile","Phenotype file input:"),
+                 numericInput("pca_obs", "Principal Components", 3, min = 0, max = 10),
                  checkboxGroupInput("gwas_methods", "Choose GWAS methods:",
                                     choices = list("mrMLM" = "mrMLM", "FASTmrMLM" = "FASTmrMLM",
                                                    "FASTmrEMMA" = "FASTmrEMMA", "ISIS EM-BLASSO" = "ISIS EM-BLASSO",
@@ -272,7 +272,7 @@ ui = fluidPage(tagList(
                  verbatimTextOutput("value"),
                  fileInput("etgwas_pheno", "Phenotype"),
                  actionButton("run_etgwas", "Run"),
-                 downloadButton("downloadEt_Data", label = "Download"),
+                 # downloadButton("downloadEt_Data", label = "Download"),
                ),
                mainPanel(
                  tabsetPanel(
@@ -290,7 +290,7 @@ ui = fluidPage(tagList(
     tabPanel("Haplo-Pheno",fluid = T,
              sidebarLayout(
                sidebarPanel(
-                 fileInput("hapfile","Phenotypic file input:"),
+                 fileInput("hapfile","Phenotype file input:"),
                  fileInput("posfile","MTA file input:"),
                  # fileInput("gff_file", "Upload GFF File", accept = ".gff3"),
                  numericInput("LD", "LD region", 25000,min = 1000, max = 250000),
