@@ -189,6 +189,47 @@ ui = fluidPage(tagList(
                )
              )
     ),
+    
+    ## Genotype Format Converter
+    # titlePanel("Genotype Format Converter"),
+    tabPanel("Genotype File Converter",fluid = T,
+             sidebarLayout(
+               sidebarPanel(
+                 radioButtons("conversion_type", "Select conversion type:",
+                              choices = c("VCF to HapMap" = "vcf2hapmap",
+                                          "HapMap to VCF" = "hapmap2vcf",
+                                          "PLINK to VCF" = "plink2vcf")),
+                 
+                 conditionalPanel(
+                   condition = "input.conversion_type == 'vcf2hapmap'",
+                   fileInput("vcf_file", "Upload VCF File (.vcf)", accept = c(".vcf"))
+                 ),
+                 conditionalPanel(
+                   condition = "input.conversion_type == 'hapmap2vcf'",
+                   fileInput("hapmap_file", "Upload HapMap File (.hmp.txt)", accept = c(".txt", ".hmp.txt"))
+                 ),
+                 conditionalPanel(
+                   condition = "input.conversion_type == 'plink2vcf'",
+                   fileInput("bed_file", "Upload PLINK .bed", accept = c(".bed")),
+                   fileInput("bim_file", "Upload PLINK .bim", accept = c(".bim")),
+                   fileInput("fam_file", "Upload PLINK .fam", accept = c(".fam")),
+                   # textInput("plink2_path", "Path to plink2 binary", value = "plink2")
+                 ),
+                 
+                 # textInput("output_name", "Output file name (no extension)", value = "converted_output"),
+                 actionButton("run", "Run Conversion")
+                 # br(),
+                 # downloadButton("download", "Download Converted File")
+               ),
+               
+               mainPanel(
+                 verbatimTextOutput("preview"),
+                 br(),                            # Adds a bit of spacing
+                 downloadButton("download", "Download Converted File")
+               )
+             )
+    ),
+  # )
     #Geno extract----
     tabPanel("Genofile Extract",fluid = T,
              sidebarLayout(

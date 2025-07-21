@@ -1,23 +1,37 @@
 qc_linux <- function(choice_geno,phefile,ip_dir, theme_cus) {
   
-  system(paste0(ip_dir, "/plink2 --vcf marker.vcf --maf 0.05 --export vcf --out marker"))
-  system(paste0(ip_dir, "/tassel5/run_pipeline.pl -Xmx12g -fork1 -vcf marker.vcf -homozygous -export marker -exportType Hapmap -runfork1"))
-  
-  system(paste0(ip_dir, "/plink2 --vcf marker.vcf --freq --out marker"))
-  system("bcftools annotate --set-id '%CHROM\\_%POS' -o marker_updated.vcf marker.vcf")
-  system(paste0(ip_dir, "/plink2 --vcf marker.vcf --pca --read-freq marker.afreq --out pca"))
-  
-  
-  mar <- read.delim2(paste0(dir,"/marker.hmp.txt"), header = FALSE)
-  mar <- mar[, -c(2, 5:11)]
-  pca1 <- read.delim2(paste0(dir,"/pca.eigenvec"), header = FALSE)
-  
   if (choice_geno == "option1") {
+    system(paste0(ip_dir, "/tassel5/run_pipeline.pl -Xmx12g -fork1 -vcf marker.vcf -homozygous -export marker -exportType Hapmap -runfork1"))
+    
+    system(paste0(ip_dir, "/plink2 --vcf marker.vcf --freq --out marker"))
+    system("bcftools annotate --set-id '%CHROM\\_%POS' -o marker_updated.vcf marker.vcf")
+    system(paste0(ip_dir, "/plink2 --vcf marker.vcf --pca --read-freq marker.afreq --out pca"))
+    
+    mar <- read.delim2(paste0(dir,"/marker.hmp.txt"), header = FALSE)
+    mar <- mar[, -c(2, 5:11)]
+    names0 <- mar[1, 4:ncol(mar)]
+    names21 <- sub("(_IRIS.*)$", "", names0)
+    names21 <- as.data.frame(names21)
+    names21 <- t(names21)
+    names21 <- as.vector(names21)
+    colnames(mar)[4:ncol(mar)] <- names21
+    
+    pca1 <- read.delim2(paste0(dir,"/pca.eigenvec"), header = FALSE)
     names <- mar[1, 4:ncol(mar)]
     names2 <- sapply(names, function(x) unlist(strsplit(x, "_IRIS"))[1])
     
     pca1[c(2:nrow(pca1)),1] <- names2
   } else{
+    system(paste0(ip_dir, "/plink2 --vcf marker.vcf --maf 0.05 --export vcf --out marker"))
+    system(paste0(ip_dir, "/tassel5/run_pipeline.pl -Xmx12g -fork1 -vcf marker.vcf -homozygous -export marker -exportType Hapmap -runfork1"))
+    
+    system(paste0(ip_dir, "/plink2 --vcf marker.vcf --freq --out marker"))
+    system("bcftools annotate --set-id '%CHROM\\_%POS' -o marker_updated.vcf marker.vcf")
+    system(paste0(ip_dir, "/plink2 --vcf marker_updated.vcf --pca --read-freq marker.afreq --out pca"))
+    
+    mar <- read.delim2(paste0(dir,"/marker.hmp.txt"), header = FALSE)
+    mar <- mar[, -c(2, 5:11)]
+    pca1 <- read.delim2(paste0(dir,"/pca.eigenvec"), header = FALSE)
     names2 <- mar[1, 4:ncol(mar)]
   }
   

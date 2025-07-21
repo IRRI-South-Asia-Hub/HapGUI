@@ -723,6 +723,89 @@ server <- function(input, output, session) {
       write.csv(GAV(),file)
     })
   
+  ## Genotype file converter ------
+  converted_file <- reactiveVal(NULL)
+  
+  observeEvent(input$run, {
+    # req(input$output_name)
+    outname <- tempfile("converted_", fileext = "")
+    
+    type <- input$conversion_type
+    
+    output$preview <- renderText("Running conversion...")
+    
+    tryCatch({
+      if (type == "vcf2hapmap") {
+        req(input$vcf_file)
+        tasObj <- readGenotypeTableFromPath(input$vcf_file$datapath)
+        filtered <- filterGenotypeTableSites(tasObj, siteMinCount = 0)
+        outfile <- paste0(outname, ".hmp.txt")
+        exportGenotypeTable(filtered, file = outfile, format = "hapmap", keepDepth = TRUE,
+                            taxaAnnotations = TRUE, branchLengths = TRUE)
+        converted_file(outfile)
+        
+      } else if (type == "hapmap2vcf") {
+        req(input$hapmap_file)
+        hapmap_temp <- tempfile(fileext = ".hmp.txt")
+        file.copy(input$hapmap_file$datapath, hapmap_temp, overwrite = TRUE)
+        genotype <- readGenotypeTableFromPath(hapmap_temp)
+        outfile <- paste0(outname, ".vcf")
+        exportGenotypeTable(
+          tasObj = genotype,
+          file = outfile,
+          format = "vcf",
+          keepDepth = TRUE,
+          taxaAnnotations = TRUE
+        )
+        converted_file(outfile)
+        
+      } else if (type == "plink2vcf") {
+        req(input$bed_file, input$bim_file, input$fam_file)
+        prefix <- tempfile("plink_tmp_")
+        
+        file.copy(input$bed_file$datapath, paste0(prefix, ".bed"), overwrite = TRUE)
+        file.copy(input$bim_file$datapath, paste0(prefix, ".bim"), overwrite = TRUE)
+        file.copy(input$fam_file$datapath, paste0(prefix, ".fam"), overwrite = TRUE)
+        
+        outfile_prefix <- file.path(tempdir(), "converted_geno")
+        outfile_final <- paste0(outfile_prefix, ".vcf")
+        # cmd <- paste0(ip_dir,"/plink2", " --bfile ", prefix, " --export vcf", "--out", sub("\\.vcf$", "", outfile))
+        
+        cmd <- paste(file.path(ip_dir, "plink2"), "--bfile", prefix, "--export vcf", "--out", outfile_prefix)
+        
+        system(cmd)
+        
+        converted_file(outfile_final)
+      }
+      
+      
+      # Show first 10 lines in preview
+      if (!is.null(converted_file()) && file.exists(converted_file())) {
+        preview_lines <- readLines(converted_file(), n = 10)
+        output$preview <- renderText(paste(preview_lines, collapse = "\n"))
+      }
+      
+    }, error = function(e) {
+      output$preview <- renderText(paste("Error:", e$message))
+      converted_file(NULL)
+    })
+  })
+  
+  output$download <- downloadHandler(
+    filename = function() {
+      if (!is.null(converted_file())) {
+        basename(converted_file())
+      } else {
+        "converted_output.txt"
+      }
+    },
+    content = function(file) {
+      req(converted_file())
+      file.copy(converted_file(), file)
+    }
+  )
+# }
+  
 
   #Genomic extract ----
   pheno_ingeno = reactive({
@@ -1140,17 +1223,17 @@ server <- function(input, output, session) {
          alt = "This is alternate text")
   }, deleteFile = F)
   
-  output$downloadEt_Data <- downloadHandler(         ##### ### Download Et-GWAS results in Zip
-    filename <- function() {
-      paste("Et-output", "zip", sep=".")
-    },
-    content <- function(file) {
-      files2zip <- dir('EtGWAS_results', full.names = TRUE)
-      zip(zipfile = 'testZip', files = files2zip)
-      file.copy("testZip", file)
-    },
-    contentType = "application/zip"
-  )
+  # output$downloadEt_Data <- downloadHandler(         ##### ### Download Et-GWAS results in Zip
+  #   filename <- function() {
+  #     paste("Et-output", "zip", sep=".")
+  #   },
+  #   content <- function(file) {
+  #     files2zip <- dir('EtGWAS_results', full.names = TRUE)
+  #     zip(zipfile = 'testZip', files = files2zip)
+  #     file.copy("testZip", file)
+  #   },
+  #   contentType = "application/zip"
+  # )
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   #Hap_pheno tabs----
