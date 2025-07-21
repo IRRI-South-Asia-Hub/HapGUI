@@ -1,3 +1,7 @@
+# setwd("/home/bandana/Documents/HapGUI_package/final_apps/final/backup/HapGUI/Haplopheno")
+# vcf_file <- "marker.vcf"
+# genome_name <- "Oryza_sativa"
+# dir <- getwd()
 vcf_annotation <- function(vcf_file, gff_file, ann_path, genome=NULL) {
   library(vcfR)
   library(reshape2)
@@ -86,7 +90,20 @@ vcf_annotation <- function(vcf_file, gff_file, ann_path, genome=NULL) {
   #   branchLengths = TRUE
   # )
 
-  func.hmp <- read.delim("marker.hmp.txt", header = TRUE)
+  # if (choice_geno == "option1") {
+  mar1 <- read.delim("marker.hmp.txt", header = TRUE)
+  # mar1 <- mar1[, -c(2, 5:11)]
+  names0 <- mar1[1, 12:ncol(mar1)]
+  names0 <- colnames(names0)
+  names21 <- sub("(_IRIS.*)$", "", names0)
+  names21 <- as.data.frame(names21)
+  names21 <- t(names21)
+  names21 <- as.vector(names21)
+  colnames(mar1)[12:ncol(mar1)] <- names21
+  func.hmp <- mar1
+  #   }else{
+  #   func.hmp <- read.delim("marker.hmp.txt", header = TRUE) 
+  # }
 
   # Replace IUPAC codes with corresponding alleles
    func.hmp[func.hmp == "R"] <- "A/G"
