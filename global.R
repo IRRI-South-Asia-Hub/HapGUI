@@ -1,8 +1,8 @@
-# setwd("/home/app")
-setwd("/home/bandana/Documents/HapGUI_package/final_apps/final/backup/versions/f2/HapGUI")
+setwd("/home/app")
+# setwd("/home/bandana/Documents/HapGUI_package/final_apps/final/backup/versions/f7_Remove_Et-GWAS/HapGUI")
 dir <- getwd()
 ip_dir <- "softwares"
-options(shiny.maxRequestSize = 40000*1024^2)
+options(shiny.maxRequestSize = 80000*1024^2)
 source("ui.R")
 source("server.R")
 
@@ -15,7 +15,6 @@ library(htmltools)
 library(mrMLM)
 library(dplyr)
 library(readr)
-library(CMplot)
 library(bestNormalize)
 library(tidyr)
 library(plyr)
@@ -56,6 +55,10 @@ library(AnnotationDbi)
 library(VariantAnnotation)
 library(txdbmaker)
 library(rTASSEL)
+library(GWASpoly)
+library(CMplot)
+library(snpStats)
+library(LDheatmap)
 
 genes_file <- "ricegenes.txt"
 subpop = "3k_subpop.txt"
@@ -65,14 +68,16 @@ source("scripts/hap_phe2.R")
 source("scripts/func_piechart.R")
 source("scripts/pca_plot.R")
 source("scripts/qc_linux.R")
-source("scripts/extract_irisID.R")
-source("scripts/association_main.R")
+# source("scripts/extract_irisID.R")
+# source("scripts/association_main.R")
 source("scripts/candidate_gene.R")
 source("scripts/hap_phe2.R")
 source("scripts/func_piechart.R")
 source("scripts/annotation.R")
+source("scripts/LD_decay.R")
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #Server start
+# server <- function(input, output, session) {}
 shinyApp(ui = ui, server = server)
 
