@@ -264,6 +264,17 @@ ui = fluidPage(tagList(
                               )
                             )
                    ),
+                   
+                   tabPanel("LD-decay", fluid = TRUE,
+                            # actionButton("run_ld", "Run LD-decay analysis"),
+                            tags$br(), tags$br(),
+                            tableOutput("ld_table"),
+                            downloadButton("ld_table_down", "Download LD table"),
+                            tags$hr(),
+                            imageOutput("LD_plot"),
+                            br(), br(), br(), br(), br(), br(),
+                            downloadButton("ld_plot_down", "Download LD plot")
+                   ),
                  )
                )
              )
@@ -300,33 +311,126 @@ ui = fluidPage(tagList(
                )
              )
     ),
-
-    # Et-GWAS tab ----
-    tabPanel("Et-GWAS",fluid = T,
-             sidebarLayout(
-               sidebarPanel(
-                 selectInput(inputId = "Bulk_size",
-                             label = "Bulk size:",
-                             choices = c("10", "15", "20")),
-                 
-                 textInput("Trait", "Trait" , "Ex: SPY "),
-                 verbatimTextOutput("value"),
-                 fileInput("etgwas_pheno", "Phenotype"),
-                 actionButton("run_etgwas", "Run"),
-                 # downloadButton("downloadEt_Data", label = "Download"),
+  
+  # GWASpoly tab ----------------------------------------------------------------
+  tabPanel("GWASpoly",
+           fluidPage(
+             h3("GWASpoly Analysis"),
+             
+             fileInput("pheno_file", "Upload Phenotype File (CSV)", accept = ".csv"),
+             numericInput("ploidy_input", "Enter Ploidy Level", value = 6, min = 2, step = 1),
+             textInput("trait_input", "Enter Trait Name (case-sensitive)", placeholder = "e.g., GY"),
+             actionButton("run_gwaspoly", "Run GWASpoly Analysis", class = "btn-primary"),
+             br(), br(),
+             
+             h4("Identified MTAs (Top 15 Rows)"),
+             tableOutput("mta_table"),
+             downloadButton("download_mta", "Download Identified_MTAs.csv"),
+             br(), br(),
+             
+             h4("Manhattan Plots"),
+             plotOutput("manhattan_general"),
+             downloadButton("download_manhattan_general", "Download general Manhattan Plot"),
+             plotOutput("manhattan_additive"),
+             downloadButton("download_manhattan_additive", "Download additive Manhattan Plot"),
+             plotOutput("manhattan_1dom"),
+             downloadButton("download_manhattan_1dom", "Download 1-dom Manhattan Plot"),
+             
+             h4("QQ Plots"),
+             plotOutput("qq_general"),
+             downloadButton("download_qq_general", "Download general QQ Plot"),
+             plotOutput("qq_additive"),
+             downloadButton("download_qq_additive", "Download additive QQ Plot"),
+             plotOutput("qq_1dom"),
+             downloadButton("download_qq_1dom", "Download 1-dom QQ Plot"),
+             
+             h4("LD Plot"),
+             plotOutput("ld_plot"),
+             downloadButton("download_ld", "Download LD Plot")
+           )
+  ),
+  
+    # Visualization GWAS
+    # tabPanel("GWAS Visualization",fluid = T,
+    #   sidebarLayout(
+    #     sidebarPanel(
+    #       fileInput("gwas_file", "Upload GWAS CSV File", accept = ".csv"),
+    #       actionButton("run_plot", "Run"),
+    #       # helpText("CSV must contain: Marker, Chrom, Position, pval (in -log10 scale)"),
+    #       br(),br(),
+    #       downloadButton("download_density", "Download SNP Density Plot"),
+    #       downloadButton("download_manhattan", "Download Manhattan Plot"),
+    #       downloadButton("download_circular", "Download Circular Manhattan Plot")
+    #     ),
+    #     
+    #     mainPanel(
+    #       tabsetPanel(id = "plot_tabs",
+    #                   tabPanel("SNP Density Plot", imageOutput("density_plot")),
+    #                   tabPanel("Manhattan Plot", imageOutput("manhattan_plot")),
+    #                   tabPanel("Circular Manhattan Plot", imageOutput("circular_plot"))
+    #       )
+    #     )
+    #   )
+    # ),
+  
+  # GWAS Visualization
+  
+  tabPanel("Visualization",fluid = T,
+           # mainPanel(
+             tabsetPanel(
+               tabPanel("Manhattan Plot",
+                        sidebarLayout(
+                          sidebarPanel(
+                            fileInput("man_snp_file", "Upload SNP CSV file", accept = ".csv"),
+                            actionButton("run_manhattan", "Run")
+                          ),
+                          mainPanel(
+                            plotOutput("manhattan_plot"),
+                            br(), br(),br(),br(),br(),
+                            downloadButton("download_manhattan", "Download Manhattan Plot")
+                          )
+                        )
                ),
-               mainPanel(
-                 tabsetPanel(
-                   tabPanel("Phenotypic distribution",
-                            plotOutput("plot1", width = "100%",
-                                       height = "300px"),
-                            plotOutput("plot2", width = "100%", height = "300px")),
-                   tabPanel("Association",
-                            plotOutput("plot3", width = "100%",
-                                       height = "300px")))
+               tabPanel("SNP Density Plot",
+                        sidebarLayout(
+                          sidebarPanel(
+                          ),
+                          mainPanel(
+                            plotOutput("density_plot"),
+                            downloadButton("download_density", "Download SNP Density Plot")
+                          )
+                        )
+               ),
+               tabPanel("Circular Manhattan Plot",
+                        sidebarLayout(
+                          sidebarPanel(
+                            fileInput("circ_file", "Upload Circular Manhattan CSV", accept = ".csv"),
+                            actionButton("run_circ", "Run")
+                          ),
+                          mainPanel(
+                            plotOutput("circ_plot"),
+                            br(),br(),br(),br(),br(),
+                            downloadButton("download_circ", "Download Circular Manhattan Plot")
+                          )
+                        )
+               ),
+               tabPanel("LD Heatmap",
+                        sidebarLayout(
+                          sidebarPanel(
+                            fileInput("ld_vcf", "Upload VCF File", accept = ".vcf"),
+                            actionButton("run_ld", "Run")
+                          ),
+                          mainPanel(
+                            uiOutput("ld_tabs"),
+                            br(), br(), br(),br(), br(), br(),br(), br(), br(),
+                            downloadButton("download_ld", "Download LD Heatmap")
+                          )
+                        )
                )
              )
-    ),
+           # )
+  ),
+
     # hap-phe tab -------------------------------------------------------------
     tabPanel("Haplo-Pheno",fluid = T,
              sidebarLayout(
@@ -373,7 +477,41 @@ ui = fluidPage(tagList(
                  )
                )
              )
-    )
+    ),
+  
+  ## Help tab
+  tabPanel("Help",
+           tabsetPanel(
+             tabPanel("User Manual",
+                      fluidRow(
+                        column(12,
+                               tags$h4("User Manual"),
+                               tags$iframe(
+                                 src = "User_manual.pdf",  # File should be in www/
+                                 style = "width:100%; height:700px;",
+                                 frameborder = "0"
+                               )
+                        )
+                      )
+             ),
+             
+             tabPanel("Report Issue",
+                      fluidRow(
+                        column(12,
+                               tags$h4("Report an Issue"),
+                               tags$p("If you encounter a bug, please raise it on GitHub else check other resolved bugs"),
+                               tags$a(
+                                 href = "https://github.com/IRRI-South-Asia-Hub/HapGUI/issues", 
+                                 target = "_blank",
+                                 class = "btn btn-danger",
+                                 icon("github"),
+                                 " Raise an Issue on GitHub"
+                               )
+                        )
+                      )
+             )
+           )
+  )
 
 
   )

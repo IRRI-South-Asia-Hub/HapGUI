@@ -912,8 +912,8 @@ server <- function(input, output, session) {
       genome_name <- sub(".*/([^./]+)\\..*", "\\1", gff_path)
       system(paste0(ip_dir, "/plink2 --bfile ", genofile,
                     " --keep id.txt --export vcf --out marker"))
-      system(paste0(ip_dir, "/plink2 --bfile ", genofile, 
-                    " --keep id.txt --make-bed --out marker_etgwas"))
+      # system(paste0(ip_dir, "/plink2 --bfile ", genofile, 
+                    # " --keep id.txt --make-bed --out marker_etgwas"))
 
     } else if (input$choose_geno == "option2" && !is.null(input$geno_vcf)) {
       #vcf_path <- input$vcf_file$datapath
@@ -939,8 +939,8 @@ server <- function(input, output, session) {
       vcf_subset <- vcf[, c("FORMAT", matching_samples)]
       write.vcf(vcf_subset, file = "marker.vcf")
       # system(paste0(ip_dir, "/plink2 --vcf marker.vcf --export vcf --out marker"))
-      system(paste0(ip_dir, "/plink2 --vcf marker.vcf --export vcf --out marker"))
-      system(paste0(ip_dir, "/plink2 --vcf marker.vcf --make-bed --out marker_etgwas --double-id"))
+      system(paste0(ip_dir, "/plink2 --vcf marker.vcf --allow-extra-chr --export vcf --out marker"))
+      # system(paste0(ip_dir, "/plink2 --vcf marker.vcf --allow-extra-chr --max-alleles 2 --make-bed --out marker_etgwas --double-id"))
     }
 
     choice_geno = input$choose_geno
@@ -950,7 +950,13 @@ server <- function(input, output, session) {
 
     annotation_result <- vcf_annotation("marker.vcf", gff_path,
                                         ann_path, genome_name)
-
+ 
+    ld_data <- ld_decay(
+      vcf_path = file.path("marker.vcf"),
+      ip_dir = ip_dir,
+      dir = dir
+    )
+    
     removeModal()
 
     output$pca_plot <- renderImage({
@@ -1003,9 +1009,39 @@ server <- function(input, output, session) {
         file.copy("annotated_variants.csv", file)
       }
     )
+    
+    output$ld_table <- renderTable({
+      head(ld_data, 10)
+    })
+    
+    output$ld_table_down <- downloadHandler(
+      filename = function() { "LD_stats.csv" },
+      content = function(file) {
+        file.copy(file.path(dir, "marker_LD_stats.csv"), file)
+      }
+    )
+    
+    output$LD_plot <- renderImage({
+      list(
+        src = file.path(dir, "LD_plot.png"),
+        contentType = "image/png",
+        width = 600,
+        height = 500,
+        alt = "LD decay plot"
+      )
+    }, deleteFile = FALSE)
+    
+    output$ld_plot_down <- downloadHandler(
+      filename = function() { "LD_plot.png" },
+      content = function(file) {
+        file.copy(file.path(dir, "LD_plot.png"), file)
+      },
+      contentType = "image/png"
+    )
 
   })
 
+  
   #GWAS tabs----
   output$analysis_started = renderPrint({
     req(input$runa)
@@ -1146,96 +1182,377 @@ server <- function(input, output, session) {
       })
     }
   })
-
-  #Et-GWAS tabs----
-
   
-  phe = reactive({
-    phe <- read.csv(file = input$etgwas_pheno$datapath,header = T) #file name  =  pheno.csv
+  ## GWASpoly
+  
+  observeEvent(input$run_gwaspoly, {
     
-    pnam <- c("X.Phenotype.","trait") #Change trait
-    colnames(phe) <- pnam
-    return(phe)
-  })
-  
-  plotData <- reactiveVal(NULL)
-  processingResult <- reactiveVal(NULL)
-  
-  #dir.create(file.path(dir,"EtGWAS_results"))
-  
-  observeEvent(input$run_etgwas, {
-    processingResult(NULL)
-    
-    showModal( modalDialog(
-      h4(paste0("Et-GWAS for ",nrow(phe())," genotypes")),
-      footer=tagList(h3("running..."))
+    showModal(modalDialog(
+      h4("LD_decay analysis is running. Please wait..."),
+      easyClose = FALSE,
+      footer = NULL
     ))
     
-    plotData(extract_irisID(trait = input$Trait,
-                            infile = input$etgwas_pheno$datapath,
-                            perc = as.numeric(input$Bulk_size),dir = dir,ip_dir = ip_dir))
+    # Run in background with delay to avoid UI freeze
+    shiny::withProgress(message = "Running LD-decay...", value = 0.5, {
+      ld_data <- run_ld_decay_analysis(
+        vcf_path = file.path(dir, "marker.vcf"),
+        ip_dir = ip_dir,
+        dir = dir
+      )
+    })
     
-    processingResult()
+    removeModal()
     
-    et_out <- paste(input$Trait,"_intermediate_result",
-                    as.numeric(input$Bulk_size),".csv",sep = "")
+    req(input$pheno_file, input$ploidy_input, input$trait_input)
     
-    et_fout <- paste(input$Trait,"_Final_result",
-                     as.numeric(input$Bulk_size),".csv",sep = "")
+    # dir <- "www"  # adjust to your working directory
+    trait <- input$trait_input
+    ploidy <- input$ploidy_input
+    dir11 <- file.path(dir, trait, "GWAS_results")
+    dir.create(dir11, recursive = TRUE, showWarnings = FALSE)
     
+    # Save user-uploaded phenotype
+    phe <- read.csv(input$pheno_file$datapath)
+    # phe_r <- phe[, c(colnames(phe)[1], trait)]
+    colnames(phe)[2] <- trait
+    phe_r <- phe
+    # phe_r <- phe[, c(1, trait)]
+    write.csv(phe_r, file.path(dir11, "pheno.csv"), row.names = FALSE)
     
-    if(file.exists(file.path(dir,"EtGWAS_results",et_out))){
-      removeModal()
-      
-      showModal( modalDialog(
-        h4(paste0("MTAs are identied and the file is present at: EtGWAS_results/",
-                  et_fout)),
-        footer=tagList(actionButton("ok_etgwas","Proceed to download the files"))
-      ))
-      
-      observeEvent(input$ok_etgwas, {
-        removeModal()
+    # Copy existing Genofile/PCA from Genofile Extract
+    pca <- read.csv(file.path(dir,"pca.csv"), header = T)
+    cn <- colnames(pca)
+    pca1 <- insertRows(pca, 1 , new = NA)
+    pca1[1,] <- cn
+    pca1[1,1] <- "<ID>"
+    # pca1 <- pca[,c(1:(as.numeric(input$pca_obs)+1))]
+    colnames(pca1) <- "<PCA>"
+    colnames(pca1)[2:ncol(pca1)] <- ""
+    write.csv(pca1, file = "pca_temp.csv", row.names = FALSE)
+    file.copy(file.path(dir, "pca_temp.csv"), file.path(dir11, "pca_temp.csv"))
+    
+    # Run GWASpoly
+    data <- read.GWASpoly(
+      ploidy = ploidy,
+      pheno.file = file.path(dir11, "pheno.csv"),
+      geno.file = file.path(dir, "marker.csv"),
+      format = "ACGT",
+      n.traits = 1,
+      delim = ","
+    )
+    
+    data <- set.K(data, LOCO = FALSE)
+    
+    # PCA
+    pca_data <- read.csv(file.path(dir11, "pca_temp.csv"), skip = 2, header = FALSE)
+    colnames(pca_data) <- c("ID", paste0("PC", 1:10))
+    samples <- rownames(data@geno)
+    pca_matched <- pca_data[match(samples, pca_data$ID), ]
+    data@fixed <- pca_matched[, c("PC1", "PC2", "PC3"), drop = FALSE]
+    
+    # GWASpoly
+    params <- set.params(fixed = c("PC1", "PC2", "PC3"), fixed.type = rep("numeric", 3))
+    results <- GWASpoly(
+      data,
+      models = c("general", "additive", "1-dom", "2-dom", "3-dom"),
+      traits = trait,
+      params = params
+    )
+    
+    # Save scores
+    scores <- results@scores
+    map <- results@map
+    fin_score <- bind_cols(map,
+                           data.frame(scores[[trait]][["general"]]),
+                           data.frame(scores[[trait]][["additive"]]),
+                           data.frame(scores[[trait]][["1-dom-alt"]]),
+                           data.frame(scores[[trait]][["1-dom-ref"]]),
+                           data.frame(scores[[trait]][["2-dom-alt"]]),
+                           data.frame(scores[[trait]][["2-dom-ref"]]),
+                           data.frame(scores[[trait]][["3-dom-alt"]]),
+                           data.frame(scores[[trait]][["3-dom-ref"]]))
+    colnames(fin_score)[6:ncol(fin_score)] <- c("general", "additive", "dom_alt1", "dom_ref1", "dom_alt2", "dom_ref2", "dom_alt3", "dom_ref3")
+    write.csv(fin_score, file.path(dir11, "all_model_results.csv"), row.names = FALSE)
+    
+    # Manhattan & QQ & LD plots
+    ggsave(file.path(dir11, "general_manhattan_plot.png"), manhattan.plot(results, trait, models = "general"), width = 8, height = 6, dpi = 600)
+    ggsave(file.path(dir11, "additive_manhattan_plot.png"), manhattan.plot(results, trait, models = "additive"), width = 8, height = 6, dpi = 600)
+    ggsave(file.path(dir11, "1-dom_plot.png"), manhattan.plot(results, trait, models = "1-dom"), width = 8, height = 6, dpi = 600)
+    ggsave(file.path(dir11, "general_qq_plot.png"), qq.plot(results, trait, models = "general"), width = 8, height = 6, dpi = 600)
+    ggsave(file.path(dir11, "additive_qq_plot.png"), qq.plot(results, trait, models = "additive"), width = 8, height = 6, dpi = 600)
+    ggsave(file.path(dir11, "1-dom_qq_plot.png"), qq.plot(results, trait, models = "1-dom"), width = 8, height = 6, dpi = 600)
+    ggsave(file.path(dir11, "LD_plot.png"), LD.plot(results, max.pair = 10000, dof = 8), width = 8, height = 6, dpi = 600)
+    
+    # Identified MTAs
+    resul <- read.csv(file.path(dir11, "all_model_results.csv"))
+    method_cols <- names(resul)[6:ncol(resul)]
+    Method <- sapply(1:nrow(resul), function(i) {
+      non_na <- !is.na(resul[i, method_cols])
+      av_methods <- method_cols[non_na]
+      if (length(av_methods) == 0) return(NA)
+      paste(av_methods, collapse = ", ")
+    })
+    final_result <- cbind(resul, Method)
+    fin_resM <- final_result[, c(1:5, ncol(final_result))]
+    write.csv(fin_resM, file.path(dir11, "Identified_MTAs.csv"), row.names = FALSE)
+    
+    # Display top 15 rows
+    output$mta_table <- renderTable({
+      head(fin_resM, 15)
+    })
+    
+    # Download handlers
+    output$download_mta <- downloadHandler(
+      filename = function() {"Identified_MTAs.csv"},
+      content = function(file) {
+        file.copy(file.path(dir11, "Identified_MTAs.csv"), file)
+      }
+    )
+    
+    # Image rendering and download setup
+    plots <- list(
+      manhattan_general = "general_manhattan_plot.png",
+      manhattan_additive = "additive_manhattan_plot.png",
+      manhattan_1dom = "1-dom_plot.png",
+      qq_general = "general_qq_plot.png",
+      qq_additive = "additive_qq_plot.png",
+      qq_1dom = "1-dom_qq_plot.png",
+      ld_plot = "LD_plot.png"
+    )
+    
+    for (plot_name in names(plots)) {
+      local({
+        name <- plot_name
+        file_name <- plots[[name]]
+        output[[name]] <- renderImage({
+          list(src = file.path(dir11, file_name), contentType = "image/png", width = "100%")
+        }, deleteFile = FALSE)
+        
+        output[[paste0("download_", name)]] <- downloadHandler(
+          filename = function() { file_name },
+          content = function(file) {
+            file.copy(file.path(dir11, file_name), file)
+          }
+        )
       })
     }
   })
   
-  output$resultText <- renderPrint({
-    processingResult()
+  #GWAS Visualization
+  
+  plot_manhattan_and_density <- function(file_path, dir) {
+    snp <- read.csv(file_path)
+    snp1 <- snp[!(is.na(snp[,4]) | snp[,4] == ""), ]
+    colnames(snp1) <- c("Marker", "Chrom", "Position", "pval")
+    snp1$pval <- 10^(-snp1$pval)
+    
+    # Manhattan plot
+    manhattan_path <- file.path(dir, "Manhattan_plt.png")
+    png(manhattan_path, width = 1000, height = 600)
+    manhattan(data.frame(SNP = snp1$Marker, CHR = as.numeric(gsub("[A-Za-z]", "", snp1$Chrom)),
+                         BP = snp1$Position, P = snp1$pval),
+              main = "Manhattan Plot", col = c("blue4", "orange3"), cex = 0.6)
+    dev.off()
+    
+    # SNP density
+    density_path <- file.path(dir, "SNP_density_plt.png")
+    CMplot(
+      snp1, plot.type = "d", bin.size = 1e6,
+      chr.den.col = c("darkgreen", "yellow", "red"),
+      file = "png",
+      file.name = "SNP_density_plt",  # no full path, no extension
+      dpi = 600, main = "SNP density plot",
+      file.output = TRUE, verbose = TRUE, width = 9, height = 6
+    )
+    
+    # Rename after plot generation
+    old_density_file <- "Marker_Density.SNP_density_plt.png"
+    new_density_file <- "Marker_Density_SNP_density_plt.png"
+    
+    if (file.exists(old_density_file)) {
+      file.rename(old_density_file, new_density_file)
+    }
+    return(list(manhattan = manhattan_path,
+                density = paste0(density_path, ".png")))
+  }
+  
+  plot_circular_manhattan <- function(file_path, dir) {
+    snp <- read.csv(file_path)
+    snp1 <- snp[!(is.na(snp[,4]) | snp[,4] == ""), ]
+    colnames(snp1) <- c("Marker", "Chrom", "Position", "pval")
+    snp1$pval <- 10^(-snp1$pval)
+    chrm <- as.vector(unique(snp1$Chrom))
+    
+    circ_path <- file.path(dir, "circular_manhattan.png")
+    CMplot(snp1,
+           type = "p",
+           plot.type = "c",
+           chr.labels = paste(chrm, sep = ""),
+           r = 0.4,
+           cir.axis = TRUE,
+           outward = FALSE,
+           cir.axis.col = "black",
+           cir.chr.h = 1.3,
+           chr.den.col = "black",
+           file = "png",  # ✅ fix
+           file.name = "circular_manhattan",  
+           dpi = 600,
+           file.output = TRUE,
+           verbose = TRUE,
+           width = 10,
+           height = 10)
+    # Rename after plot generation
+    old_cm_file <- "Cir_Manhtn.circular_manhattan.png"
+    new_cm_file <- "Cir_Manhtn_circular_manhattan.png"
+    
+    if (file.exists(old_cm_file)) {
+      file.rename(old_cm_file, new_cm_file)
+    }
+    
+    return(paste0(circ_path, ".png"))
+  }
+  
+  plot_ld_heatmap <- function(vcf_file_path) {
+    
+    vcf <- read.vcfR(vcf_file_path)
+    chrom <- vcf@fix[, "CHROM"]
+    pos <- as.numeric(vcf@fix[, "POS"])
+    snp_info <- data.frame(CHROM = chrom, POS = pos, row_id = 1:length(pos))
+    
+    n_snps_per_chr <- 100
+    unique_chroms <- unique(snp_info$CHROM)
+    
+    output_paths <- list()
+    
+    for (chr in unique_chroms) {
+      snps_chr <- snp_info %>% filter(CHROM == chr) %>% head(n_snps_per_chr)
+      vcf_chr <- vcf[snps_chr$row_id, ]
+      gt <- extract.gt(vcf_chr, element = "GT", as.numeric = FALSE)
+      
+      gt_numeric <- matrix(NA, nrow = ncol(gt), ncol = nrow(gt))
+      for (i in 1:nrow(gt)) {
+        gt_numeric[, i] <- sapply(gt[i, ], function(x) {
+          if (x %in% c("0/0", "0|0")) return(0)
+          else if (x %in% c("0/1", "1/0", "0|1", "1|0")) return(1)
+          else if (x %in% c("1/1", "1|1")) return(2)
+          else return(NA)
+        })
+      }
+      
+      colnames(gt_numeric) <- vcf_chr@fix[, "ID"]
+      rownames(gt_numeric) <- colnames(gt)
+      geno_matrix <- as(gt_numeric, "SnpMatrix")
+      
+      depth_val <- min(100, ncol(geno_matrix) - 1)
+      ld_mat_sparse <- ld(geno_matrix, depth = depth_val, stats = "R.squared")
+      ld_mat <- as.matrix(ld_mat_sparse)
+      snp_pos <- as.numeric(vcf_chr@fix[, "POS"])
+      
+      output_file <- paste0("LDheatmap_chr_", chr, ".png")
+      png(output_file, width = 3000, height = 3000, res = 600)
+      LDheatmap(ld_mat, genetic.distances = snp_pos,
+                LDmeasure = "r", title = paste("LD Heatmap - Chr", chr),
+                color = colorRampPalette(c("blue", "green", "yellow", "red"))(20))
+      dev.off()
+      
+      output_paths[[chr]] <- output_file
+    }
+    
+    return(output_paths)
+  }
+  
+  observeEvent(input$run_manhattan, {
+    dir <- getwd()
+    req(input$man_snp_file)
+    file_path <- input$man_snp_file$datapath
+    plot_manhattan_and_density(file_path, dir)
+    output$manhattan_plot <- renderImage({
+      list(src = "Manhattan_plt.png", contentType = "image/png", width = 800)
+    }, deleteFile = FALSE)
+    
+    output$density_plot <- renderImage({
+      list(
+        src = normalizePath(file.path(dir, "Marker_Density_SNP_density_plt.png")),
+        contentType = "image/png",
+        width = "100%",
+        height = "auto"
+      )
+    }, deleteFile = FALSE)
+    
   })
   
-  output$plot1 <- renderPlot({
-    if (!is.null(plotData()))
-      plotData()$plot5
+  output$download_manhattan <- downloadHandler(
+    filename = function() { "Manhattan_plt.png" },
+    content = function(file) { file.copy("Manhattan_plt.png", file) }
+  )
+  
+  output$download_density <- downloadHandler(
+    filename = function() { "Marker_Density_SNP_density_plt.png" },
+    content = function(file) {
+      file.copy("Marker_Density_SNP_density_plt.png", file)
+    }
+  )
+  
+  observeEvent(input$run_circ, {
+    req(input$circ_file)
+    dir <- getwd()
+    circ_path <- plot_circular_manhattan(input$circ_file$datapath, dir = "plots")
+    
+    output$circ_plot <- renderImage({
+      list(src = normalizePath(file.path(dir, "Cir_Manhtn_circular_manhattan.png")), contentType = "image/png", 
+           width = "100%", height = "auto")
+    }, deleteFile = FALSE)
+    
+    output$download_circ <- downloadHandler(
+      filename = function() { "circular_manhattan.png" },
+      content = function(file) {
+        file.copy(circ_path, file)
+      }
+    )
   })
-  output$plot2 <- renderPlot({
-    if (!is.null(plotData()))
-      plotData()$plot1
+  
+  
+  
+  observeEvent(input$run_ld, {
+    req(input$ld_vcf)
+    vcf_file <- input$ld_vcf$datapath
+    dir <- getwd()
+    chr_list <- plot_ld_heatmap(vcf_file)
+    chr_names <- names(chr_list)
+    
+    
+    output$ld_tabs <- renderUI({
+      tabs <- lapply(chr_names, function(chr) {
+        tabPanel(paste("Chr", chr), imageOutput(paste0("ld_plot_chr", chr)))
+      })
+      do.call(tabsetPanel, unname(tabs))
+    })
+    for (chr in chr_names) {
+      local({
+        ch <- chr
+        output[[paste0("ld_plot_chr", ch)]] <- renderImage({
+          file_path <- paste0("LDheatmap_chr_", ch, ".png")
+          if (file.exists(file_path)) {
+            list(src = normalizePath(file_path),
+                 contentType = "image/png",
+                 width = "100%", height = "auto")
+          } else {
+            NULL
+          }
+        }, deleteFile = FALSE)
+      })
+    }
   })
   
-  output$plot3 <- renderImage({
-    outfile <- tempfile(fileext = '.jpeg')
-    list(src = file.path(dir,"EtGWAS_results",
-                         paste0(input$Trait,"_",
-                                input$Bulk_size,"Manhattan.jpg")),
-         contentType = 'image/jpeg',
-         width = 400,
-         height = 300,
-         alt = "This is alternate text")
-  }, deleteFile = F)
-  
-  # output$downloadEt_Data <- downloadHandler(         ##### ### Download Et-GWAS results in Zip
-  #   filename <- function() {
-  #     paste("Et-output", "zip", sep=".")
-  #   },
-  #   content <- function(file) {
-  #     files2zip <- dir('EtGWAS_results', full.names = TRUE)
-  #     zip(zipfile = 'testZip', files = files2zip)
-  #     file.copy("testZip", file)
-  #   },
-  #   contentType = "application/zip"
-  # )
-  
-  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  output$download_ld <- downloadHandler(
+    filename = function() { "LDheatmaps.zip" },
+    content = function(file) {
+      files <- list.files(pattern = "LDheatmap_chr_\\d+.png")
+      zip(file, files)
+    }
+  )
+
   #Hap_pheno tabs----
   observeEvent(input$runhap, {
 
@@ -1465,4 +1782,6 @@ server <- function(input, output, session) {
       contentType = "application/zip"
     )
   })
+  
+  ## Help tab
 }

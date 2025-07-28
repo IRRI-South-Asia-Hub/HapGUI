@@ -3,9 +3,9 @@ qc_linux <- function(choice_geno,phefile,ip_dir, theme_cus) {
   if (choice_geno == "option1") {
     system(paste0(ip_dir, "/tassel5/run_pipeline.pl -Xmx12g -fork1 -vcf marker.vcf -homozygous -export marker -exportType Hapmap -runfork1"))
     
-    system(paste0(ip_dir, "/plink2 --vcf marker.vcf --freq --out marker"))
+    system(paste0(ip_dir, "/plink2 --vcf marker.vcf --allow-extra-chr --freq --out marker"))
     system("bcftools annotate --set-id '%CHROM\\_%POS' -o marker_updated.vcf marker.vcf")
-    system(paste0(ip_dir, "/plink2 --vcf marker.vcf --pca --read-freq marker.afreq --out pca"))
+    system(paste0(ip_dir, "/plink2 --vcf marker.vcf --allow-extra-chr --pca --read-freq marker.afreq --out pca"))
     
     mar <- read.delim2(paste0(dir,"/marker.hmp.txt"), header = FALSE)
     mar <- mar[, -c(2, 5:11)]
@@ -22,12 +22,19 @@ qc_linux <- function(choice_geno,phefile,ip_dir, theme_cus) {
     
     pca1[c(2:nrow(pca1)),1] <- names2
   } else{
-    system(paste0(ip_dir, "/plink2 --vcf marker.vcf --maf 0.05 --export vcf --out marker"))
-    system(paste0(ip_dir, "/tassel5/run_pipeline.pl -Xmx12g -fork1 -vcf marker.vcf -homozygous -export marker -exportType Hapmap -runfork1"))
+    system(paste0(ip_dir, "/plink2 --vcf marker.vcf --allow-extra-chr --maf 0.05 --export vcf --out marker"))
+    # system(paste0(ip_dir, "/tassel5/run_pipeline.pl -Xmx12g -fork1 -vcf marker.vcf -homozygous -export marker -exportType Hapmap -runfork1"))
     
-    system(paste0(ip_dir, "/plink2 --vcf marker.vcf --freq --out marker"))
+    system(paste0(ip_dir, "/plink2 --vcf marker.vcf --allow-extra-chr --freq --out marker"))
     system("bcftools annotate --set-id '%CHROM\\_%POS' -o marker_updated.vcf marker.vcf")
-    system(paste0(ip_dir, "/plink2 --vcf marker_updated.vcf --pca --read-freq marker.afreq --out pca"))
+    # system(paste0(ip_dir, "/plink2 --vcf marker_updated.vcf --set-all-var-ids '@:#\\$r_\\$a' --make-pgen --out marker_unique"))
+    # system(paste0(ip_dir, "/plink2 --vcf marker_updated.vcf ", "--set-all-var-ids '@:#:$r:$a' ", "--allow-extra-chr ", "--make-pgen ", "--out marker_unique"))
+    system(paste0(ip_dir, "/plink2 --vcf marker_updated.vcf ", "--set-all-var-ids '@:#:$r:$a' ", "--allow-extra-chr ", "--export vcf ","--out marker_cleaned"))     ## polyploid
+    system(paste0(ip_dir, "/tassel5/run_pipeline.pl -Xmx12g ", "-SortGenotypeFilePlugin ", "-inputFile marker_cleaned.vcf ", "-outputFile marker.vcf ", "-fileType VCF"))
+    
+    system(paste0(ip_dir, "/tassel5/run_pipeline.pl -Xmx12g -fork1 ", "-vcf marker.vcf -homozygous ", "-export marker -exportType Hapmap -runfork1"))
+    
+    system(paste0(ip_dir, "/plink2 --vcf marker.vcf --allow-extra-chr --pca --read-freq marker.afreq --out pca"))
     
     mar <- read.delim2(paste0(dir,"/marker.hmp.txt"), header = FALSE)
     mar <- mar[, -c(2, 5:11)]
