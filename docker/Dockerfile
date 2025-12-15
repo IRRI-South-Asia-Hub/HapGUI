@@ -35,6 +35,7 @@ RUN apt-get update && apt-get install -y \
     libmpfr-dev \
     libmpc-dev \
     cmake \
+    bcftools\
     && apt-get clean
 
 # Set up R environment variables
@@ -53,7 +54,7 @@ RUN R -e "install.packages(c('profvis', 'shiny', 'shinythemes', 'shinyFiles', 'f
     'htmltools', 'mrMLM', 'plyr', 'dplyr', 'CMplot', 'tidyr', 'haplotypes', \
     'agricolae', 'ggplot2', 'ggridges', 'plotly', 'readxl', 'RColorBrewer', \
     'crayon', 'stringr', 'berryFunctions', 'imager', 'yhat', 'corrplot', 'augmentedRCBD', \
-    'data.table', 'ggfortify', 'extrafont', 'stats', 'psych', 'foreach', \
+    'data.table', 'ggfortify', 'stats', 'psych', 'foreach', \
     'doParallel', 'qqman', 'reshape2', 'vcfR', 'rJava', 'htmlwidgets'), \
     repos='https://cloud.r-project.org/', dependencies=TRUE, INSTALL_opts = c('--no-lock'))"
 # Validate installation
@@ -61,7 +62,7 @@ RUN R -e "sapply(c('profvis', 'shiny', 'shinythemes', 'shinyFiles', 'fs', \
     'htmltools', 'mrMLM', 'plyr', 'dplyr', 'CMplot', 'tidyr', 'haplotypes', \
     'agricolae', 'ggplot2', 'ggridges', 'plotly', 'readxl', 'RColorBrewer', \
     'crayon', 'stringr', 'berryFunctions', 'imager', 'yhat', 'corrplot', 'augmentedRCBD', \
-    'data.table', 'ggfortify', 'extrafont', 'stats', 'psych', 'foreach', \
+    'data.table', 'ggfortify', 'stats', 'psych', 'foreach', \
     'doParallel', 'qqman', 'reshape2', 'vcfR', 'rJava', 'htmlwidgets'), function(pkg) { \
         if (!requireNamespace(pkg, quietly = TRUE)) \
             message(paste('Package', pkg, 'not found')); \
@@ -73,12 +74,12 @@ RUN R -e "remotes::install_github('davidgohel/flextable')"
 RUN R -e "library(flextable)"
 # Install Bioconductor dependencies
 RUN R -e "if (!requireNamespace('BiocManager', quietly = TRUE)) install.packages('BiocManager')"
-RUN R -e "BiocManager::install(c('Rhtslib', 'rtracklayer', 'Rsamtools', 'GenomicAlignments', \
+RUN R -e "BiocManager::install(c('Rhtslib', 'rtracklayer', 'Rsamtools', 'GenomicAlignments', 'snpStats', \
     'BSgenome', 'GenomicFeatures', 'txdbmaker', 'GenomicRanges', 'GenomeInfoDb', \
-    'BiocGenerics', 'S4Vectors', 'AnnotationDbi', 'VariantAnnotation'), force = TRUE)"
+    'BiocGenerics', 'S4Vectors', 'AnnotationDbi', 'VariantAnnotation','SNPRelate'), force = TRUE)"
 RUN R -e "sapply(c('Rhtslib', 'rtracklayer', 'Rsamtools', 'GenomicAlignments', \
     'BSgenome', 'GenomicFeatures', 'txdbmaker', 'GenomicRanges', 'GenomeInfoDb', \
-    'BiocGenerics', 'S4Vectors', 'AnnotationDbi', 'VariantAnnotation'), \
+    'BiocGenerics', 'S4Vectors', 'AnnotationDbi', 'VariantAnnotation','SNPRelate'), \
     function(pkg) { if (!requireNamespace(pkg, quietly = TRUE)) message(paste('Package', pkg, 'not found')) })"
 # Install Java and dependencies
 RUN apt-get update && apt-get install -y openjdk-17-jdk liblzma-dev libbz2-dev zlib1g-dev
@@ -109,13 +110,37 @@ RUN R -e "library(lme4)"
 #RUN R -e "install.packages('ggpubr', repos = c("https://cran.rediris.org/", "https://cloud.r-project.org/"), dependencies=TRUE)"
 RUN R -e "devtools::install_github('kassambara/ggpubr')"
 RUN R -e "library(ggpubr)"
+RUN R -e "devtools::install_github('jendelman/GWASpoly', build_vignettes=FALSE)"
+RUN R -e "library(GWASpoly)"
+
+RUN R -e "install.packages(c('gdata', 'genetics'), repos='https://cloud.r-project.org/', dependencies=TRUE, INSTALL_opts = c('--no-lock')); \
+           if (!requireNamespace('BiocManager', quietly = TRUE)) install.packages('BiocManager'); \
+           BiocManager::install('snpStats'); \
+           devtools::install_github('SFUStatgen/LDheatmap'); \
+           library(LDheatmap)"
+
+RUN R -e "install.packages(c('gdata', 'genetics'), repos='https://cloud.r-project.org/', dependencies=TRUE, INSTALL_opts = c('--no-lock')); \
+           devtools::install_github('SFUStatgen/LDheatmap'); \
+           library(LDheatmap)"
+
+RUN R -e "remotes::install_github('wch/extrafont')"
+RUN R -e "library(extrafont)"
+
+
+#RUN R -e "library(LDheatmap)"
 # Create the working directory
 RUN mkdir -p /home/app
 # Copy Shiny app files into the container
 COPY HapGUI /home/app
+
+RUN chmod 777 /home/app/softwares/plink && \
+    chmod 777 /home/app/softwares/plink2 && \
+    chmod 777 /home/app/softwares/PopLDdecay/bin/PopLDdecay && \
+    chmod 777 /home/app/softwares/tassel5/run_pipeline.pl
+    
 # Set the working directory
 WORKDIR home/app
-# Expose the port your Shiny app will run on
+## Expose the port your Shiny app will run on
 EXPOSE 3232
 # Run the Shiny app
 CMD ["R", "-e", "shiny::runApp('/home/app', host='0.0.0.0', port=3232)"]
