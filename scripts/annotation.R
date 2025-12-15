@@ -1,6 +1,7 @@
-# setwd("/home/bandana/Documents/HapGUI_package/final_apps/final/backup/HapGUI/Haplopheno")
+# setwd("/media/bandana/DATA/Wheat")
 # vcf_file <- "marker.vcf"
-# genome_name <- "Oryza_sativa"
+# genome_name <- "Triticum_aestivum"
+# gff_file <- "Triticum_aestivum.IWGSC.60.gff3"
 # dir <- getwd()
 vcf_annotation <- function(vcf_file, gff_file, ann_path, genome=NULL) {
   library(vcfR)
@@ -22,6 +23,7 @@ vcf_annotation <- function(vcf_file, gff_file, ann_path, genome=NULL) {
   dir.create(ann_path, recursive = TRUE, showWarnings = FALSE)
   
   # Read VCF and GFF files
+  # vcf_gr <- readVcf(vcf_file, genome = genome)
   vcf_gr <- readVcf(vcf_file, genome = genome)
   gff <- read.table(gff_file, sep="\t", quote="")
 
@@ -36,14 +38,15 @@ vcf_annotation <- function(vcf_file, gff_file, ann_path, genome=NULL) {
   g1 <- g1[,!names(g1) %in% c("g1$gene_id")]
   
   ## Roman to int
-  roman_vals <- c(I=1, II=2, III=3, IV=4, V=5, VI=6, VII=7, VIII=8, IX=9, X=10)
-  g1 <- g1 %>%
-    mutate(Chromosome = ifelse(toupper(Chromosome) %in% names(roman_vals), 
-                         as.character(roman_vals[toupper(Chromosome)]), 
-                         Chromosome))
-     
-  g11 <- g1[grepl("^[0-9]+(\\.[0-9]+)?$", g1$Chromosome), ]
-  write.csv(g11,"genes.csv",row.names = F)
+  # roman_vals <- c(I=1, II=2, III=3, IV=4, V=5, VI=6, VII=7, VIII=8, IX=9, X=10)
+  # g1 <- g1 %>%
+  #   mutate(Chromosome = ifelse(toupper(Chromosome) %in% names(roman_vals), 
+  #                        as.character(roman_vals[toupper(Chromosome)]), 
+  #                        Chromosome))
+  #    
+  # g11 <- g1[grepl("^[0-9]+(\\.[0-9]+)?$", g1$Chromosome), ]
+  # write.csv(g11,"genes.csv",row.names = F)
+  write.csv(g1,"genes.csv",row.names = F)
 
   # Annotate variants
   txdb <- makeTxDbFromGFF(gff_file, format = "gff3")
@@ -73,22 +76,23 @@ vcf_annotation <- function(vcf_file, gff_file, ann_path, genome=NULL) {
   write.csv(vcf_fin, "annotated_variants.csv", row.names = FALSE)
 
   # Convert VCF to Hapmap format with MAF filtering
-  options(java.parameters = "-Xmx8G")
+  options(java.parameters = "-Xmx32G")
   tasObj <- readGenotypeTableFromPath(file.path(dir, "annotated_variants.vcf"))
   maf_vcfgr <- filterGenotypeTableSites(
     tasObj,
     siteMinCount = 0,
     siteMinAlleleFreq = 0.05
   )
-  # file <- "marker_homo"
-  # exportGenotypeTable(
-  #   maf_vcfgr,
-  #   file = file,
-  #   format = "hapmap",
-  #   keepDepth = TRUE,
-  #   taxaAnnotations = TRUE,
-  #   branchLengths = TRUE
-  # )
+  #file <- "marker_homo"
+
+  #exportGenotypeTable(
+  #maf_vcfgr,
+  #file = file,
+  #format = "hapmap",
+  #keepDepth = TRUE,
+  #taxaAnnotations = TRUE,
+  #branchLengths = TRUE
+  #)
 
   # if (choice_geno == "option1") {
   mar1 <- read.delim("marker.hmp.txt", header = TRUE)
@@ -102,7 +106,7 @@ vcf_annotation <- function(vcf_file, gff_file, ann_path, genome=NULL) {
   colnames(mar1)[12:ncol(mar1)] <- names21
   func.hmp <- mar1
   #   }else{
-  #   func.hmp <- read.delim("marker.hmp.txt", header = TRUE) 
+  #   func.hmp <- read.delim("marker.hmp.txt", header = TRUE)
   # }
 
   # Replace IUPAC codes with corresponding alleles
@@ -130,7 +134,8 @@ vcf_annotation <- function(vcf_file, gff_file, ann_path, genome=NULL) {
      return(gene_id)
    }
 
-   lapply(1:nrow(g11), function(i) generate_genefiles(g11[i, ]))
+   # lapply(1:nrow(g11), function(i) generate_genefiles(g11[i, ]))
+   lapply(1:nrow(g1), function(i) generate_genefiles(g1[i, ]))
 
    return("Processing completed. Check the output directory for results.")
 }

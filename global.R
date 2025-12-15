@@ -1,5 +1,8 @@
+# setwd("/home/divya/Documents/Bandana/f12/HapGUI")
+# setwd("/home/bandana/Documents/HapGUI_package/final_apps/final/backup/versions/without_Et_GWAS/f8/HapGUI")
+# setwd("/home/bandana/Documents/Bandana/f10/HapGUI")
 setwd("/home/app")
-# setwd("/home/bandana/Documents/HapGUI_package/final_apps/final/backup/versions/f7_Remove_Et-GWAS/HapGUI")
+
 dir <- getwd()
 ip_dir <- "softwares"
 options(shiny.maxRequestSize = 80000*1024^2)
@@ -54,11 +57,11 @@ library(S4Vectors)
 library(AnnotationDbi)
 library(VariantAnnotation)
 library(txdbmaker)
-library(rTASSEL)
-library(GWASpoly)
-library(CMplot)
-library(snpStats)
-library(LDheatmap)
+library(rTASSEL)#install through github/bioconductor
+library(GWASpoly)#install through github/bioconductor
+library(CMplot)#install through github/bioconductor
+library(snpStats)#install through github/bioconductor
+library(LDheatmap)#install through github/bioconductor
 
 genes_file <- "ricegenes.txt"
 subpop = "3k_subpop.txt"

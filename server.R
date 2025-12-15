@@ -992,7 +992,7 @@ server <- function(input, output, session) {
       content = function(file) { write.csv(marker, file, row.names = FALSE) }
     )
 
-    output$table_down <- downloadHandler(
+    output$pca_table_down2 <- downloadHandler(
       filename = function() { "pca.csv" },
       content = function(file) { file.copy("pca.csv", file) },
       contentType = "application/csv"
@@ -1188,21 +1188,23 @@ server <- function(input, output, session) {
   observeEvent(input$run_gwaspoly, {
     
     showModal(modalDialog(
-      h4("LD_decay analysis is running. Please wait..."),
+      h4("GWAS for polyploid is running. Please wait..."),
       easyClose = FALSE,
       footer = NULL
     ))
     
     # Run in background with delay to avoid UI freeze
-    shiny::withProgress(message = "Running LD-decay...", value = 0.5, {
-      ld_data <- run_ld_decay_analysis(
-        vcf_path = file.path(dir, "marker.vcf"),
-        ip_dir = ip_dir,
-        dir = dir
-      )
-    })
+    # shiny::withProgress(message = "Running LD-decay...", value = 0.5, {
+    #   ld_data <- run_ld_decay_analysis(
+    #     vcf_path = file.path(dir, "marker.vcf"),
+    #     ip_dir = ip_dir,
+    #     dir = dir
+    #   )
+    # })
     
-    removeModal()
+    observeEvent(input$run_gwaspoly, {
+      removeModal()
+    })
     
     req(input$pheno_file, input$ploidy_input, input$trait_input)
     
@@ -1380,12 +1382,16 @@ server <- function(input, output, session) {
   plot_circular_manhattan <- function(file_path, dir) {
     snp <- read.csv(file_path)
     snp1 <- snp[!(is.na(snp[,4]) | snp[,4] == ""), ]
-    colnames(snp1) <- c("Marker", "Chrom", "Position", "pval")
-    snp1$pval <- 10^(-snp1$pval)
+    # colnames(snp1) <- c("Marker", "Chrom", "Position", "pval")
+    # snp1$pval <- 10^(-snp1$pval)
+    dc <- snp1[ , 4:ncol(snp1)]
+    dc1 <- 10^(-dc)
+    snp1_trans <- cbind(snp1[ , 1:3], dc1)
+    # head(snp1_trans)
     chrm <- as.vector(unique(snp1$Chrom))
     
     circ_path <- file.path(dir, "circular_manhattan.png")
-    CMplot(snp1,
+    CMplot(snp1_trans,
            type = "p",
            plot.type = "c",
            chr.labels = paste(chrm, sep = ""),
@@ -1598,7 +1604,7 @@ server <- function(input, output, session) {
     write.csv(df2, file.path(dir, "locus.csv"), row.names = FALSE)
 
     showModal( modalDialog(
-      h4(paste0("Haplo-Pheno analysis for ",nrow(df2)," Candidate genes")),
+      h4(paste0("Haplo-Pheno analysis for ", nrow(df2)," Candidate genes")),
       footer=tagList(h3("running..."))
     ))
 

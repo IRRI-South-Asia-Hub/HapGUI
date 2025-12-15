@@ -249,7 +249,7 @@ ui = fluidPage(tagList(
                             imageOutput("pca_plot"),
                             downloadButton("plot_down","download pca plot"),
                             tableOutput("pca_table"),
-                            downloadButton("table_down","download pca table"),
+                            downloadButton("pca_table_down2","download pca table"),
                    ),
                    tabPanel("Genotype",fluid = T,
                             tableOutput("geno_table"),
@@ -331,18 +331,24 @@ ui = fluidPage(tagList(
              h4("Manhattan Plots"),
              plotOutput("manhattan_general"),
              downloadButton("download_manhattan_general", "Download general Manhattan Plot"),
+             br(), br(),br(), br(),
              plotOutput("manhattan_additive"),
              downloadButton("download_manhattan_additive", "Download additive Manhattan Plot"),
+             br(), br(),br(), br(),
              plotOutput("manhattan_1dom"),
              downloadButton("download_manhattan_1dom", "Download 1-dom Manhattan Plot"),
+             br(), br(),br(), br(),
              
              h4("QQ Plots"),
              plotOutput("qq_general"),
              downloadButton("download_qq_general", "Download general QQ Plot"),
+             br(), br(),br(), br(),
              plotOutput("qq_additive"),
              downloadButton("download_qq_additive", "Download additive QQ Plot"),
+             br(), br(),br(), br(),
              plotOutput("qq_1dom"),
              downloadButton("download_qq_1dom", "Download 1-dom QQ Plot"),
+             br(), br(),br(), br(),
              
              h4("LD Plot"),
              plotOutput("ld_plot"),
@@ -397,6 +403,7 @@ ui = fluidPage(tagList(
                           ),
                           mainPanel(
                             plotOutput("density_plot"),
+                            br(),br(),br(),br(),br(),br(),
                             downloadButton("download_density", "Download SNP Density Plot")
                           )
                         )
@@ -409,7 +416,7 @@ ui = fluidPage(tagList(
                           ),
                           mainPanel(
                             plotOutput("circ_plot"),
-                            br(),br(),br(),br(),br(),
+                            br(),br(),br(),br(),br(),br(),br(),br(),
                             downloadButton("download_circ", "Download Circular Manhattan Plot")
                           )
                         )
@@ -422,7 +429,7 @@ ui = fluidPage(tagList(
                           ),
                           mainPanel(
                             uiOutput("ld_tabs"),
-                            br(), br(), br(),br(), br(), br(),br(), br(), br(),
+                            br(), br(), br(),br(), br(), br(),br(), br(), br(),br(),br(),br(),br(),br(),
                             downloadButton("download_ld", "Download LD Heatmap")
                           )
                         )
